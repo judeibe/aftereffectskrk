@@ -14,8 +14,8 @@ A good understanding of After-Effects.
 
 Add a new composition.  The best way is to add in with a video clip.  In this getting started, we will use the basic settings:
 
-1. the resolution is set to 704X400
-2. the time length is set to one minute and thirty seconds.
+ # the resolution is set to 704X400
+ # the time length is set to one minute and thirty seconds.
 
 Rename the composition to "Karaoke" without the quotes.
 
