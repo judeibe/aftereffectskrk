@@ -7,8 +7,8 @@ Welcome to the world of karaoke automation.  In this document, you will find out
 A good understanding of After-Effects.
 
 = Files Contents =
-* Karaoke_json.html - Karaoke json generator from .ass karaoke.
-* karaoke.jsx - AFX Karaoke generator script
+ * *Karaoke_json.html* - Karaoke json generator from .ass karaoke.
+ * *karaoke.jsx* - AFX Karaoke generator script
 
 = After-Effects Design =
 
@@ -46,23 +46,23 @@ Let's start off by creating a new project.  In the project, create a new Composi
 Next, add a Text Layer.  Under the text layer, go to Text and then Source Text.  Alt-click the clock to bring up the expression.  Copy and paste the result from Karaoke_json.html into the expression box.  Check off the "=" sign so that the expression won't get evaluated.  You can collapse the text layer to hide the ugly expression.
 
 You can either have the text layer created as a regular text layer or paragraph layer.  I prefer paragraph because it wraps the text around, but it doesn't matter in this case.  Type the following codes into your text layer.
-
+{{{
 shift( -10 )
 add( "Karaoke" )
-
+}}}
 The first line means that you will be shifting the Karaoke by -10 seconds.  You can ignore this line, but I'm showing what the script is capable of now.  The next line will add the Composition Karaoke into the KRK Project.
 
 Next, go back to Composition Karaoke, add a new text layer just like before, but this time rename the text layer to "KRK" (without the quotes).  Type in the following codes in there:
-
+{{{
 add( "K" )
 .a( "anim" , true )
 .p( "transform.opacity" )
 .l( "romaji" )
-
-* The first line adds a text layer K for the karaoke template.
-* The next line adds a text animator you created for the karaoke.  The true in that line means that you are created as a syllable-timing instead of line-timing.  If you don't include true, it won't animate as the karaoke.
-* The third line means that you are animating the transform.opacity that you created (keyframes).  You can get these names easily by showing the expressions, which will reveal the names of the properties you're adding. Note: this is case-sensitive.
-* The fourth line means that you are creating lines through "romaji" style.  Note: all style cases have been converted to lower case.  This is for convenient reasons because .ass is case-insensitive.
+}}}
+ * The first line adds a text layer K for the karaoke template.
+ * The next line adds a text animator you created for the karaoke.  The true in that line means that you are created as a syllable-timing instead of line-timing.  If you don't include true, it won't animate as the karaoke.
+ * The third line means that you are animating the transform.opacity that you created (keyframes).  You can get these names easily by showing the expressions, which will reveal the names of the properties you're adding. Note: this is case-sensitive.
+ * The fourth line means that you are creating lines through "romaji" style.  Note: all style cases have been converted to lower case.  This is for convenient reasons because .ass is case-insensitive.
 
 = Generate =
 
