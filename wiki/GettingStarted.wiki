@@ -7,8 +7,8 @@ Welcome to the world of karaoke automation.  In this document, you will find out
 A good understanding of After-Effects.
 
 = Files Contents =
-* <b>Karaoke_json.html<b> - Karaoke json generator from .ass karaoke.
-* <b>karaoke.jsx<b> - AFX Karaoke generator script
+* [b]Karaoke_json.html[/b] - Karaoke json generator from .ass karaoke.
+* [b]karaoke.jsx[/b] - AFX Karaoke generator script
 
 = After-Effects Design =
 
