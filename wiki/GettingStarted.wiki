@@ -1,5 +1,4 @@
 #summary Get started
-#labels Featured
 
 = Introduction =
 Welcome to the world of karaoke automation.  In this document, you will find out how to get started with this script.
