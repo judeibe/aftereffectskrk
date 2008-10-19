@@ -93,6 +93,11 @@ Generates the layers based on your styles and options.
 
   * PropertyName is a string that can be obtained from the expression of a property.  By default, Adobe After-Effects will display the name in the expression field.
 
+Note: If there are children properties under PropertyName, it will search through all the children and use the children with the keyframes with the current options.
+For example, if you have linear wipe, fast blur, and nothing else under Effects, and you want to apply the effects as syllable transition, use the following command:
+
+.p( "effects" , true )
+
 === options ===
 
   * If options is a Boolean (true), it will add the animators based on the syllable (true) rather than line (false/null/undefined).
