@@ -24,7 +24,7 @@ There are two types of effects:
 = How to READ =
 
 Fn( x [, y , z ] )
-
+  * Fn is the function/method name you call by there.  If Fn has a DOT beforehand, it means that it will be called after some without a dot.
   * the brackets [ ] mean that y and z are optional
   * If I say y is optional, y can be undefined.
   * If I say z is an object, then you can use standard JSON expression to define what's in z.  For example: {syl: true, pos: true}.  This tells that z contains syl with a true value and pos with a true value.  i.e. z.syl = true, and z.pos = true.
@@ -62,7 +62,7 @@ This adds a template layer with the name LayerName (Case-Sensitive) to the compo
 
 == .a( AnimatorName [, options ] ) ==
 
-This adds an animator (with the name: AnimatorName) under Text Animator.  By default, it will add as a line effect.
+This adds an animator (with the name: AnimatorName) under Text Animator.  By default, it will add as a line effect.  The AnimatorName can be an ARRAY with multiple names.
 
 === options ===
 
