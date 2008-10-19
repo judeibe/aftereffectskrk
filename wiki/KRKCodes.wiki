@@ -85,7 +85,7 @@ Generates the layers based on your styles and options.
   * If options is a Boolean, true, it will generate syllable per layer (true) instead of line per layer (false/null/undefined)
   * If options is an object, the following will be used.
      * syl: Is it layer per syllable generator?
-     * 2: Yep, it's the number two.  It generates the secondary style with a new line next to the first style.  So you'll get two lines with the first one primary style and the second line style "2".  You will need to provide a style there using the same format described in 'styles.'
+     * 2: Yep, it's the number two.  It generates the secondary style with a new line next to the first style.  So you'll get two lines with the first one primary style and the second line style "2".  You will need to provide a style there as a String.  It only works for one style.
      * unnorm: String.  Can be "start" or "end".  This basically tells the script to do effects with unnormalized timings.  Start means it's at the starting syllable/line timing, and End means that it's at the ending syllable/line timing.
 
 
