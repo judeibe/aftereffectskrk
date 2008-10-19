@@ -7,7 +7,7 @@ In this guideline, you will learn a shear number of syllable and line effects yo
 = Space Control =
 There are three ways to enable this.
   # Add a slider control to your template karaoke, called "Spacing".
-  # Add a slider control to your KRK text layer, called "Spacing[[Layername]" where Layername is your layer name of your template.
+  # Add a slider control to your KRK text layer, called "Spacing[[Layername]]" where Layername is your layer name of your template.
   # Sets a number next in the option in .l: .l(layername, {spacing:-10})
 
 Basically, with this feature enabled, the script will add spaces after every syllable.  You can then adjust the spacing using your defined slider control.  The point of this is to enable Per-syllable effect, i.e. the entire syllable is affected rather than just the character or word itself.
