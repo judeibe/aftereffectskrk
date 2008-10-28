@@ -5,10 +5,10 @@
 In this guideline, you will learn a shear number of syllable and line effects you can do with this script.  It's based on how you configure your animators.
 
 = Space Control =
-There are three ways to enable this.
-  # Add a slider control to your template karaoke, called "Spacing".
-  # Add a slider control to your KRK text layer, called "Spacing[[Layername]]" where Layername is your layer name of your template.
-  # Sets a number next in the option in .l: .l(layername, {spacing:-10})
+Space controls are no longer supported as of version 0.50.  It's now done automatically.  To enable per-syllable effect, you must do the following:
+  # Text -> More Options -> Anchor Point Grouping
+  # Set that to "Word"
+  # It will now be treated as per-syllable effect.  Note you need to use Word as a mode effect.
 
 Basically, with this feature enabled, the script will add spaces after every syllable.  You can then adjust the spacing using your defined slider control.  The point of this is to enable Per-syllable effect, i.e. the entire syllable is affected rather than just the character or word itself.
 
@@ -21,7 +21,7 @@ This allows the per-character effects when singing on the syllable, so that the 
 = Per-Syllable Effect =
 This allows the per-sylalble effect when singing on the syllable, so that the effects will shine exactly on the syllable.  It's good if you're planning to scale on syllable.  To use this feature, make sure you do the following:
 
-  * Use Space Control (see previous section)
+  * See Space Control
   * Make sure you adjust the space control so that your syllables are as close as possible.  You can get an exact number by copying and pasting that line into your template layer and compare the lengths. :) 
   * Set: Text->More Options->Anchor Point Grouping to Word -- This enables properly scaling of the syllables.
   * Set: Range Selector->Advanced->Based On to "Word": Now the effect is applied to the overall syllable.
