@@ -110,5 +110,8 @@ For example, if you have linear wipe, fast blur, and nothing else under Effects,
 
 This basically sets the AFXPropertyName (name from expression in your layer's property) with a property and a value.  For example: .s( "layerStyle" , "enabled" , false ).
 
-=== SOON TO BE DEPRECATED ===
-When I have the time, I'll incorporate this function into .p, so that you can call it within the same method branch.
+special cases:
+when Property = null, you can set the layer's property value.
+Example: .s('enabled', null, false) -- to hide the layer.
+
+when property ='layer', you can assign the generated layers to the property.
