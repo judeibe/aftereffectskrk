@@ -1,0 +1,3 @@
+KRK.UI.Graphical = function( )
+{
+}

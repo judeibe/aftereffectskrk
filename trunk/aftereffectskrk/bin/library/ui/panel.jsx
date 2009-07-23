@@ -1,0 +1,3 @@
+KRK.UI.Panel = function( )
+{
+}

@@ -1,0 +1,3 @@
+KRK.MOD.ANIMATOR = function( )
+{
+}

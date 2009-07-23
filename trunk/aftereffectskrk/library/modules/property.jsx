@@ -1,0 +1,3 @@
+KRK.MOD.PROPERTY = function( )
+{
+}
