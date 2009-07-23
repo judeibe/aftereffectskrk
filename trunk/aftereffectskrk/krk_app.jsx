@@ -18,4 +18,4 @@
    // KRK.app = new KRK.UI.PANEL( ) ;     // PanelUI\
    KRK.app = new KRK( ) ;
 
-   
+   //TEST
