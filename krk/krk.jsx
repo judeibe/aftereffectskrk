@@ -1822,6 +1822,8 @@ function KRKLayer( layer , options )
 		var o = { } ;
 		var markers , i ;
 		var marker , makers , time , chap , comment ;
+		var startTime = this.layer.startTime ;
+		var stretch = parseFloat( this.layer.stretch ) / 100 ;
 		if ( layer == undefined )
 		{
 			layer = this.layer ;
@@ -1850,7 +1852,7 @@ function KRKLayer( layer , options )
 			for ( i = 0 ; i < markers.length ; i ++ )
 			{
 				comment = String(markers[i].comment).toLowerCase() ;
-				this.setTimeline( comment , parseFloat( markers[i].time ) - this.layer.startTime , o ) ;
+				this.setTimeline( comment , ( parseFloat( markers[i].time ) - startTime ) * stretch , o ) ;
 			}
 		}
 		this.time = o ;
