@@ -1,4 +1,5 @@
 #summary These are some of the tips you can work with using text animators.
+#labels Featured
 
 = Introduction =
 In this guideline, you will learn a shear number of syllable and line effects you can do with this script.  It's based on how you configure your animators.
