@@ -1,3 +1,0 @@
-KRK.MOD.POSITION = function( )
-{
-}

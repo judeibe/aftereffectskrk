@@ -1,6 +1,6 @@
 ﻿/************************************************************************
 @NAME After-Effects Karaoke Framework
-@VERSION 0.56c
+@VERSION 0.63c
 @AUTHOR pichu
 @License LGPL
 
@@ -12,15 +12,13 @@
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    but WITHOUT ANY WzARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    COPYRIGHT (c) 2008 Pichu
-    COPYRIGHT (c) 2008 Pichu
 	Adobe and After-Effects are the registered trademarks of Adobe Corporation.
 
 @DESCRIPTION
@@ -208,7 +206,6 @@ function KRKProject( K )
 		var j = { }  ;
 		var Styles = { }; 
 		var o = 0 ;
-		var KK , kstart ;
 		var stylez, cells2, startTime, endTime, text, Kk ;
 		hh;
 		for ( i = 0 ; i < lines.length ; i ++ )
@@ -252,13 +249,12 @@ function KRKProject( K )
 					kt = this.secs( startTime ) ;
 					for ( k1 = 0 ; k1 < K1.length ; k1 ++ )
 					{
-						KK = K1[ k1 ].match( /\{\\k.*?(-?\d+)\}(.*)/i ) ;
-						kstart = Math.round( kt * 1000 ) / 1000 ;
+						var KK = K1[ k1 ].match( /\{\\k.*?(-?\d+)\}(.*)/i ) ;
 						text1 = KK[2] ; text3 = '' ;
 						k[k1] =	{
-							  text  : text1
-							, start : kstart
-							, end   : kstart + Math.round( KK[ 1 ] / 100 * 1000 ) / 1000
+							  text : text1
+							, time : Math.round( kt * 1000 ) / 1000
+							, dur : Math.round( KK[ 1 ] / 100 * 1000 ) / 1000
 							} ;
 						notext += text1
 						kt += KK[ 1 ] / 100 ;
@@ -359,7 +355,7 @@ function KRKProject( K )
 	{
 		
 	}
-	
+
 	this.codes = function( )
 	{
 		var o , layer , text , k , t , e ;
@@ -400,6 +396,42 @@ function KRKProject( K )
 				} 
 			}
 			return null ;
+		}
+	}
+
+
+	this.@codes = function( )
+	{
+		var o , layer , text , k , t , e , comp ;
+		if ( o = this.getAObject( "KRK" ) )
+		{
+			for ( i = 1 ; i <= o.numLayers ; i ++ ) 
+			{
+				layer = o.layer( i ) ;
+				if ( ( text = layer('Text') ) && text('Source Text').value )
+				{
+					this.parseASS( String( text('Source Text').value ) ) ;
+					continue ;
+				}
+				if ( ! layer.shy && layer.source )
+				{
+					if ( layer.comment )
+					{
+						try
+						{
+							comp = this.add( layer.source ) ;
+						}
+						catch(err)
+						{
+							alert( 'Error in Project: ' + err.description ) ;
+						}
+						
+						if ( ! comp.configure( layer.comment ) ) { return false ; }
+					}
+				}
+				
+			}
+			return comp ? true : undefined ;
 		}
 	}
 	
@@ -480,6 +512,10 @@ function KRKProject( K )
 		return this ;
 	}
 
+
+	
+
+
 	this.constructor( K ) ;
 }
 
@@ -503,6 +539,7 @@ function KRKComp( comp )
 	this.project ;
 	this.unique = true ;
 	this.config = null ;
+	this.xml = null ;
 	/**
 	 * constructor function
 	 * @param comp -- After-Effects Comp object (can be numeric (index), string, or After-Effects Comp object)
@@ -511,7 +548,7 @@ function KRKComp( comp )
 	{
 		if ( comp != undefined )
 		{
-			if ( this.comp = this.project.getAObject( comp ) )
+			if ( this.comp = comp instanceof Object ? comp : this.project.getAObject( comp ) )
 			{
 				this.old = this.comp ;
 				this.name  = this.comp.name ;
@@ -547,6 +584,37 @@ function KRKComp( comp )
 			}
 		}
 		return null ;
+	}
+
+	this.configure = function( xml )
+	{
+		var i = 0 , j ;
+		var f ;
+		var layer , krklayer , children ;
+		try { this.xml = new XML ('<root>'+xml+'</root>') ; } catch ( err ) { alert( 'Error parsing XML/Configuration.\n\nComp: ' + this.name + '\nCode: ' + err.number + '\nMessage: ' + err.description ) ; return false; }
+		// layers
+		var disabled ;
+		while( typeof ( layer = this.xml.layer[i] ) == 'xml' )
+		{
+			i ++ ;
+			disabled = this.xml_bool( layer.@disabled) ? 1 : undefined  ;
+			try { krklayer = this.add( this.xmlvalue( layer.@name  ) , {space: this.xmlvalue( layer.@space ) , alias: this.xmlvalue( layer.@alias ) , no: this.xmlvalue( layer.@no ) , disabled: this.xml_bool(layer.@disabled) } ) ; } catch( err ) { alert( 'Error adding a Layer into the comp.\n\nComp: '+this.name+'\nLayer: '+layer.@name.toString()+'\nCode: ' + err.number + '\nMessage: ' + err.description ) ; return false; }
+			children = layer.elements( );
+			for ( j = 0 ; j < children.length( ) ; j ++ )
+			{
+				if ( typeof ( krklayer[f = '@' + (children[j].name().toString()).toLowerCase()] ) == 'function' )
+				{
+					try { krklayer[f]( children[j] ) ; }
+					catch( err )
+					{
+						alert( "Error in performing an XML.\n\nComp: " + this.name + "\nLayer: " + krklayer.name + '\nCode: ' + err.number + '\nMessage: ' + err.description + "\n\n\n" + children[j].toXMLString( ) ) ;
+						return false ;
+					}
+				}
+			}
+		}
+		
+		return true ;
 	}
 
 	/**
@@ -594,8 +662,9 @@ function KRKComp( comp )
  * KRKLayer( layer ) -- Main Karaoke Layer Prototype: LEVEL 3
  * @param layer -- After-Effects Layer object (can be numeric (index), string, or After-Effects Layer object)
  */
-function KRKLayer( layer , time )
+function KRKLayer( layer , options )
 {
+	this.options = { } ;
 	this.parentName = 'comp' ;
 	this.layer = null ;
 	this.name = null ;
@@ -717,20 +786,24 @@ function KRKLayer( layer , time )
 	 * @param time -- time settings (default reads from the Markers in your comp)
 	 * @see KRKLayer::readPresetTimes
 	 */
-	this.constructor = function( layer , time )
+	this.constructor = function( layer , options )
 	{
 		var i;
 		if ( layer == undefined ) { return false ; } 
 		this.layer = this.comp.getAObject( layer ) ;		
-		for ( i = 0 ; this.comp.layers[ this.name = i ? this.layer.name + "_" + String( i ) : this.layer.name ] ; i ++ ) ;
-		if ( typeof time == 'object' )
+		for ( i = 0 ; this.comp.layers[ this.name = options.alias ? options.alias : ( i ? this.layer.name + "_" + String( i ) : this.layer.name ) ] ; i ++ ) ;
+		if ( typeof options == 'object' )
 		{
-			this.time = time ;
+			this.options = options ;
 		}
-		else if ( time )
+		if ( this.options.disabled )
 		{
 			this.disabled = true ;
 			this.readPresetTimes( ) ;
+		}
+		if ( this.options.time )
+		{
+			this.time = this.options.time ;
 		}
 		else
 		{
@@ -747,7 +820,10 @@ function KRKLayer( layer , time )
 //		if ( ! this.name.match( /_/ ) )
 //		{
 			// Adding a syllable text animator for positionings
-			this.createSyllableAnimator( ) ;
+			if ( ! this.options.no )
+			{
+				this.createSyllableAnimator( ) ;
+			}
 //		}
 		return this ;
 	}
@@ -780,11 +856,36 @@ function KRKLayer( layer , time )
 		}
 		return this ;
 	}
+	
+	this.@p = this.@prop = this.@property = function( x )
+	{
+		var xx = { syl: this.xml_bool( x.@syl ) ? true : undefined , unnorm: this.xmlvalue( x.@unnorm ) , pos: this.xmlvalue( x.@pos ) } ;
+		var comp = this.xmlvalue( x.@comp ) ;
+		var layer = this.xmlvalue( x.@layer ) ;
+		var link = this.xmlvalue( x.@link ) ;
+		if ( link )
+		{
+			if ( comp && layer )
+			{
+				xx.link = [ comp , layer , link ] ;
+			}
+			else if ( layer )
+			{
+				xx.link = [ layer , link ] ;
+			}
+		}
+		this.p( x.@name.toString() , xx ) ;
+	}
 
 	this.a = function( animators , options )
 	{
 		this.adda( animators , options ) ;
 		return this ;
+	}
+
+	this.@a = this.@anim = this.@animate = this.@animator = function( x )
+	{
+		this.a( x.@name.toString() , { syl: this.xml_bool( x.@syl ) ? true : undefined, unnorm: this.xmlvalue( x.@unnorm ) } ) ;
 	}
 
 	/**
@@ -834,6 +935,20 @@ function KRKLayer( layer , time )
 	this.s = function( propertyName , property , value )
 	{
 		this.setprop.push( { name : propertyName , property : property , value : value } ) ;
+		return this ;
+	}
+
+	this.@s = this.@set = this.@setting = function( x )
+	{
+		var layer = this.xmlvalue( x.@layer ) ;
+		if ( layer )
+		{
+			this.s( this.xmlvalue( x.@name ) , 'layer' , layer ) ;
+		}
+		else
+		{
+			this.s( this.xmlvalue( x.@name ) , this.xmlvalue( x.@property ) , this.xmlvalue( x.@value ) ) ;
+		}
 		return this ;
 	}
 
@@ -963,7 +1078,7 @@ function KRKLayer( layer , time )
 		}
 
 		// Adding new layers
-		for ( k in this.addlayers )
+		for ( k = 0 ; k < this.addlayers.length ; k ++ )
 		{
 			this.addl( this.addlayers[k]['key'] , this.addlayers[k]['options'] ) ;
 		}		
@@ -975,8 +1090,11 @@ function KRKLayer( layer , time )
 			for ( k in this.layers )
 			{
 				this.layer = this.layers[k] ;
-				this.animators['KRK Syllable'].commit( ) ;
-				this.layer("Text")("Animators")("KRK Syllable").enabled = false ;
+				if ( this.animators['KRK Syllable'] )
+				{
+					this.animators['KRK Syllable'].commit( ) ;
+					this.layer("Text")("Animators")("KRK Syllable").enabled = false ;
+				}
 			}
 		}
 		
@@ -1019,6 +1137,7 @@ function KRKLayer( layer , time )
 				{
 					if ( this.setprop[l].property == 'layer' )
 					{
+						try {						
 						layerStuff = this.layerNaming( 
 						  this.setprop[l].value
 						, layerName.style
@@ -1030,7 +1149,6 @@ function KRKLayer( layer , time )
 						, layerName.style
 						, layerName.layer
 						, layerName.line ) ;
-						
 						c = this.comp.comp ;
 						property = this.getProperty( newLayer , this.setprop[l].name ) ;
 						if ( pr = c.layer( layerStuff ) )
@@ -1041,19 +1159,22 @@ function KRKLayer( layer , time )
 						{
 							property.setValue( pr.index ) ;
 						}
+						} catch( err ) { throw( { number: err.number , layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"\nTo layer: " + this.setprop[l].value  } ) ; }
 					}
 					else if ( typeof this.setprop[l].value != 'undefined' )
 					{
+						try {
 						property = this.getProperty( newLayer , this.setprop[l].name ) ;
-						property[ this.setprop[l].property ] = this.setprop[l].value ;					
+						property[ this.setprop[l].property ] = this.setprop[l].value ; } catch(err) { throw( { number: err.number , layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"  ("+this.setprop[l].property+")\nWith value: " + this.setprop[l].value  } ) ; }
 					}
 					else
 					{
-						newLayer[this.setprop[l].name] = this.setprop[l].property ;
+						try{
+						newLayer[this.setprop[l].name] = this.setprop[l].property ; } catch(err){ throw( { number: err.number , layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"  ("+this.setprop[l].property + ')'  } ) ; }
 					}
 				}
 			}
-		}	
+		}
 	}
 
 
@@ -1138,7 +1259,7 @@ function KRKLayer( layer , time )
 	 */
 	this.getAutoSpacing = function( )
 	{
-		if ( this.layer.text.moreOption( "Anchor Point Grouping" ).value != 2 ) { return false ; }
+		if ( this.layer.text.moreOption( "Anchor Point Grouping" ).value != 2 && ! this.options.space ) { return false ; }
 		var add = -1 ;
 		var t1 = 0 ;
 		var text ;
@@ -1334,7 +1455,7 @@ function KRKLayer( layer , time )
 			k = keys[i] ;
 			if ( k.length == level )
 			{
-				this.layer = this.create( options.spacing == undefined ? null : options.spacing , options[2] ? [ k[0] , options[2] ] : k[0] , k[1] , k[2] , options.syl ? ( options.syl == "all" ? -k[3] : k[3] ) : undefined ) ;
+				this.layer = this.create( options.spacing == undefined ? null : options.spacing , options[2] ? [ k[0] , options[2] ] : k[0] , k[1] , k[2] , options.syl ? ( options.syl == "all" ? -k[3] : k[3] ) : undefined , options.unnorm ) ;
 				if ( options[2] )
 				{
 					this.layers2[this.layer.name] = options[2] ;
@@ -1349,7 +1470,10 @@ function KRKLayer( layer , time )
 	this.l = function( key , options )
 	{
 		var K = this.getKaraObject( ) ;
+		var style, layer, line, syl ;
+		var k0, k1, k2 ;
 		var template ;
+
 		var level ;
 		var l ;
 		if ( !options )
@@ -1363,11 +1487,88 @@ function KRKLayer( layer , time )
 		level = options.syl ? KRK_SYLLABLE : KRK_LINE ;
 		template = this.layers.old ;
 		// var keys = this.recurseObject( K , level , key == undefined ? null : key ) ;
-		var keys = this.recurseKaraoke( level  , key ) ;
+//		var keys = this.recurseKaraoke( level  , key ) ;
 //		this.addl( key , options ) ;
+		var keys = [ ] ;
+		for ( style in K )
+		{
+			if ( typeof key.style == 'undefined' || ( typeof key.style == 'object' && key.style[style] ) )
+			{
+				k0 = K[style] ; for ( layer in k0 )
+				{
+					if ( typeof key.layer == 'undefined' || ( typeof key.layer == 'object' && key.layer[layer] ) )
+					{
+						k1 = k0[layer] ; for ( line in k1 )
+						{
+							if ( typeof key.line == 'undefined' || ( typeof key.line == 'object' && key.line[line] ) )
+							{
+								if ( options.syl )
+								{
+									k2 = k1[line] ; for ( syl = 0 ; syl < k2.length ; syl ++)
+									{
+										if ( typeof key.syl == 'undefined' || ( typeof key.syl == 'object' && key.syl[syl] ) )
+										{
+											keys.push( [ style , layer , line , syl ] ) ;
+										}
+									}								
+								}
+								else
+								{
+									keys.push( [style, layer , line] ) ;
+								}
+							}
+						}
+
+					}
+				}
+			}
+		}
 
 		this.addlayers.push( { key: keys , options: options } ) ;
 		return this ;
+	}
+	
+	this.arrayKeys = function( a )
+	{
+		var i ;
+		var o = { };
+		for ( i = 0 ; i < a.length ; i ++ )
+		{
+			o[a[i]] = true ;
+		}
+		return o;
+	}
+	
+	
+	this.@l = this.@line= function( x )
+	{
+		var z = { };
+		var y ;
+		var m , i ;
+		var o = { unnorm: this.xmlvalue( x.@unnorm ) } ;
+		if ( typeof ( y = this.xmlvalue( x.@style ) ) != 'undefined' ? true :  typeof ( y = this.xmlvalue( x.@name ) ) != 'undefined' )
+		{
+			z.style = this.arrayKeys( [y.toLowerCase()]  );
+		}
+
+		if ( typeof ( y = this.xmlvalue( x.@layer ) ) != 'undefined' )
+		{
+			z.layer = this.arrayKeys( y.match( /\d+/g )  );
+		}
+		if ( typeof ( y = this.xmlvalue( x.@line ) ) != 'undefined' )
+		{
+			z.line = this.arrayKeys( y.match( /\d+/g )  );
+		}
+		if ( this.xml_bool( x.@syl , true ) )
+		{
+			y = this.xmlvalue( x.@syl ) ;
+			o.syl = true ;
+			if ( m = String( y ).match( /\d+/g ) )
+			{
+				z.syl = this.arrayKeys( m );
+			}
+		}
+		this.l(z , o ) ;
 	}
 
 	/**
@@ -1514,7 +1715,7 @@ function KRKLayer( layer , time )
 			results.push( p ) ;
 		}
 	}
-	this.constructor( layer ) ;
+	this.constructor( layer , options ) ;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1724,7 +1925,7 @@ function KRKAnimator( animator , options )
 			}
 		}
 		var o = unnorm ? { unnorm: unnorm } : { } ;
-		this.old.sel.enabled = true ;
+		try{ this.old.sel.enabled = true ; } catch(e){ }
 		var start = 0 ;
 		this.sel = this.getSelector( ) ;
 		this.start.layer = this.end.layer = this.offset.layer = this.layer ;
@@ -1797,7 +1998,7 @@ function KRKAnimator( animator , options )
 							}
 						}*/
 						ks = ksyl[i] ;
-						// if ( ks.text.length == 0 ) { continue ; }						
+						if ( ks.text.length == 0 ) { continue ; }						
 						o.startTime = ks.time ;
 						o.endTime = ks.time + ks.dur ;
 						o.start = start / len ;
@@ -1888,7 +2089,7 @@ function KRKAnimator( animator , options )
 						}
 					}*/
 					ks = ksyl[i] ;
-					// if ( ks.text.length == 0 ) { continue ; }						
+					if ( ks.text.length == 0 ) { continue ; }						
 					o.startTime = ks.time ;
 					o.endTime = ks.time + ks.dur ;
 					o.start = start / len ;
@@ -3139,7 +3340,7 @@ function KRKCommon( )
 		{
 			if ( ! ( names[a] instanceof Array ) )
 			{
-				var n = names[a] ;
+				var n = names[a].toLowerCase() ;
 				names[a] = {  } ;
 				names[a][n] =n  ;
 			}
@@ -3148,7 +3349,7 @@ function KRKCommon( )
 				var n = { } ;
 				for ( b in names[a] )
 				{
-					n[names[a][b]] = names[a][b] ;
+					n[names[a][b].toLowerCase()] = names[a][b] ;
 				}
 				names[a] = n  ;
 			}
@@ -3158,6 +3359,7 @@ function KRKCommon( )
 		{
 			a = a.toLowerCase() ;
 			x = names.length < 1 ? a : na[a] ;
+			x = x.toLowerCase( ) ;
 			Ka = names.length < 1 ? na[x] : K[x] ;
 			for ( b in nb = names.length < 2 ? Ka : names[1] ) // Layer
 			{
@@ -3363,6 +3565,42 @@ function KRKCommon( )
 	}
 }
 
+KRKCommon.prototype.xmlvalue = function( x )
+{
+	var s = x.toString( ) ;
+	if ( s == '' )
+	{
+		return undefined ;
+	}
+	else
+	{
+		return s;
+	}
+}
+
+KRKCommon.prototype.xml_bool = function( x , nonzero )
+{
+	if ( typeof x == 'xml' )
+	{
+		x = x.toString( ) ;
+	}
+	if ( typeof x == 'string' )
+	{
+		if ( x.match( /^\s*$/ ) )
+		{
+			return undefined ;
+		}
+		if ( x.match( nonzero ? /^\s*(none|no|false)\s*/g : /^\s*(none|no|0|false)\s*/g ) )
+		{
+			return false ;
+		}
+		else
+		{
+			return true ;
+		}
+	}
+	return undefined ;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -3385,38 +3623,44 @@ KRKProperty.prototype = new KRKCommon( ) ;
 
 /** AUTO ADD **/
 
-
+{
+	var krkx;
 try{ !krk } catch( err ){ krk = null ; }
 
 if ( !krk )
 {
 	var karaoke = new KRKProject( ) ;
-	karaoke.codes( ) ;
+/*	karaoke.codes( ) ;
 	if ( karaoke.evaluate( ) == null )
+	{	*/
+	if ( krkx = karaoke.@codes( ) )
 	{
 		karaoke.begin( ) ;
 		karaoke.removeAllLayers( ) ;
 		if ( confirm( 'It seems to be good to go!!\nThe generated layers also have been purged.\n\nDo you want to commit your settings and generate the layers?\n\nNote: It may take a few minutes to generate depending upon how many layers and properties required to be generated.' ) )
 		{
-			karaoke.commit( ) ;
+			try{ karaoke.commit( ) ; } catch(err){ alert( (err.comp ? "Comp: " + err.comp : "" ) + (err.layer ? "Layer: " + err.layer: "" )+ "\nCode: " + err.number + "\nMessage:\n" + err.description ); }
+			//karaoke.commit( ) ;			
 			karaoke.topLayers( ) ;
 		}
 		karaoke.end( ) ;
 	}
-	else
+	else if ( typeof krkx == 'undefined' )
 	{
-		alert( "You need to write some codes in the source text or source text's expressions of KRK Text layer and/or KRK Comp.  They also have to be error-free before you can generate the karaoke." ) ; 
+		alert( 'Possible Reasons of Failure:\n\n1.  "KRK" Composition is not found.\n2.  You have not added any compositions in KRK Comp,\n3.  Make sure at least one comp layer in "KRK" comp is NOT SHY.\n4.  You have not provided the karaoke .ass paste in the topmost text layer.' ) ;
 	}
-	karaoke.destruct( ) ;
+	try{ karaoke.destruct( ) ;
 	delete karaoke ;
-	delete krk ;
+	delete krk ; } catch(e){ } 
+}
 }
 
 
 
-
 /************************************************************************
-VERSION TRACKING	
+VERSION TRACKING
+0.63a: XML Configurations.
+0.56: Fixed vertical auto-spacing text
 0.55: Fixed more bugs (Syllables per layer, text animators with correct spaces)
 0.54: Fixed properties linking, do spaces on text animators
 0.53: Forces an average for the SPACE widths/heights, since they're 0.

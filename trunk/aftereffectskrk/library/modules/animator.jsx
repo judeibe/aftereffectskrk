@@ -1,3 +1,0 @@
-KRK.MOD.ANIMATOR = function( )
-{
-}
