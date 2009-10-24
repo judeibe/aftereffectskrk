@@ -21,18 +21,23 @@ The old configuration is obsolete in this version, since it's a hackish way of i
 </layer>
 }}}
 
+= MAIN XML =
 
 As a side note, you cannot undo any changes made in the comments once you swapped out of the comment mode. To prevent this from happening, please edit these XML configurations with an external editor, then paste the XML config back into the box.
 
 ==copy==
-Basically it copies the layers from one composition to another composition.
+Basically it copies the layers from one composition to another composition.  Single Tag.
   * from: From composition in KRK Comp (default is the current composition)
   * to: To composition in KRK Comp (default is the current composition)
   * layer: Layer name in the 'from' composition
   * name: rename the layer to another name. (default is the source layer's name)
   * replace: true/false (default: TRUE) -- true to replace the existing layer.  False not to (so if it's not replaced, then the old layer won't get overwritten).
-
+Example:
+{{{
+<copy name="K" from="Comp 1" layer="karaoke" />
+}}}
 ==layer==
+Enclosing the following tags.
   * name is the layer's name
   * space is the zero-space override.  Note, you cannot disable zero-space if the anchor point group is set to Word.
   * no is a little optimization in calculations, where the KRK Syllable won't be generated.  However, if you enable 'no', you won't be able to collect positional values.
