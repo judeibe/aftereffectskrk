@@ -1,5 +1,5 @@
 #labels Featured
-== KRK XML Updates ==
+=KRK XML Updates=
 The old configuration is obsolete in this version, since it's a hackish way of implemented the configurator.  The new way is described as follows:
 
   # The timeline marker is left untouched
@@ -9,7 +9,7 @@ The old configuration is obsolete in this version, since it's a hackish way of i
   # Open Layer comments.
   # Type in XML Configurations next to the composition to process them.
 
-==XML Guideline==
+=XML Guideline=
 
 {{{
 <layer name="layerName" space="0" no="0">
@@ -24,13 +24,14 @@ The old configuration is obsolete in this version, since it's a hackish way of i
 As a side note, you cannot undo any changes made in the comments once you swapped out of the comment mode. To prevent this from happening, please edit these XML configurations with an external editor, then paste the XML config back into the box.
 
 
-layer:
+==layer==
   * name is the layer's name
   * space is the zero-space override.  Note, you cannot disable zero-space if the anchor point group is set to Word.
   * no is a little optimization in calculations, where the KRK Syllable won't be generated.  However, if you enable 'no', you won't be able to collect positional values.
   * alias = alias name (instead of based on name + repeated index)
 
-line: (abbreviate to l)
+===line===
+(aliases: l)
   * name is the style name (alias: style)
   * layer is the layer number in .ass (by default, it selects all layers)
   * line is the line number
@@ -54,7 +55,8 @@ This will generate all syllables for romaji style, all layers, and all lines.
 }}}
 You get the idea... This will generate all lines in line mode (non-syllables).  make sure you don't have syl attributes to make it line-effect.
 
-animator: (abbreviate to a)
+===animate===
+(aliases: animator anim a)
   * name is the text animator's name
   * syl is if it's a syllable timing (if syl=0, then it's a line timing)
   * unnorm is if it's unnormalized
@@ -63,7 +65,8 @@ animator: (abbreviate to a)
 <a name="MyAnimator" syl="syl" />
 }}}
 
-property (abbreviate to p)
+===property===
+(aliases: prop p)
   * name is the afx eval name for the properties (copy and paste from expressions)
   * syl is if it's a syllable timing (if syl=0, then it's a line timing)
   * unnorm is if it's unnormalized
@@ -82,7 +85,9 @@ For example, to link transform.position (make sure you have keyframes here or el
 {{{
 <p name="transform.position" link='effect("Point Control")(1)' comp="Karaoke" layer="karaokeLayer" />
 }}}
-set: (abbreviate to s)
+
+===set===
+(aliases: setting s)
 {{{
 <set name="enabled" value="0" />
 }}}
