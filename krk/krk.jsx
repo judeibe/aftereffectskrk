@@ -1,6 +1,6 @@
 ﻿/************************************************************************
 @NAME After-Effects Karaoke Framework
-@VERSION 0.63c
+@VERSION SVN Development Status
 @AUTHOR pichu
 @License LGPL
 
@@ -417,15 +417,7 @@ function KRKProject( K )
 				{
 					if ( layer.comment )
 					{
-						try
-						{
-							comp = this.add( layer.source ) ;
-						}
-						catch(err)
-						{
-							alert( 'Error in Project: ' + err.description ) ;
-						}
-						
+						comp = this.add( layer.source ) ;
 						if ( ! comp.configure( layer.comment ) ) { return false ; }
 					}
 				}
@@ -591,14 +583,52 @@ function KRKComp( comp )
 		var i = 0 , j ;
 		var f ;
 		var layer , krklayer , children ;
-		try { this.xml = new XML ('<root>'+xml+'</root>') ; } catch ( err ) { alert( 'Error parsing XML/Configuration.\n\nComp: ' + this.name + '\nCode: ' + err.number + '\nMessage: ' + err.description ) ; return false; }
+		try
+		{
+			this.xml = new XML ('<root>'+xml+'</root>') ;
+		}
+		catch ( err )
+		{
+			xml__ = err.message.match( /\d+/ ) ;
+			if ( xml__ )
+			{
+				xml__ = xml.split( "\n" , xml__[0] + 1 )[xml__[0] - 1].replace( /^\s+|\s+$/g , '' ) ;
+			}
+			else
+			{
+				xml__ 
+			}
+			
+			this.throw( {
+				message: 'Error parsing XML/Configuration.' ,
+				xml: xml__
+			} , err ) ;
+		}
 		// layers
 		var disabled ;
 		while( typeof ( layer = this.xml.layer[i] ) == 'xml' )
 		{
 			i ++ ;
 			disabled = this.xml_bool( layer.@disabled) ? 1 : undefined  ;
-			try { krklayer = this.add( this.xmlvalue( layer.@name  ) , {space: this.xmlvalue( layer.@space ) , alias: this.xmlvalue( layer.@alias ) , no: this.xmlvalue( layer.@no ) , disabled: this.xml_bool(layer.@disabled) } ) ; } catch( err ) { alert( 'Error adding a Layer into the comp.\n\nComp: '+this.name+'\nLayer: '+layer.@name.toString()+'\nCode: ' + err.number + '\nMessage: ' + err.description ) ; return false; }
+			try { 
+				krklayer = this.add( this.xml_value( layer.@name  ) , 
+				{
+					space: this.xml_value( layer.@space ) , 
+					alias: this.xml_value( layer.@alias ) , 
+					no: this.xml_value( layer.@no ) , 
+					disabled: this.xml_bool(layer.@disabled) , 
+					blending: this.xml_value( layer.@blend )
+				} ) ; 
+			} catch( err ) { 
+				var description = 
+					err.number == 21 ? "Layer's name is invalid." : undefined ;
+				this.throw( {
+					message: 'Error adding a layer into comp.' ,
+					comp: this.name ,
+					layer: layer.@name ,
+					xml: layer.toString().match( /^[^>]+/ )[0] + '>...' ,
+					description: description
+				} , err ) ; }
 			children = layer.elements( );
 			for ( j = 0 ; j < children.length( ) ; j ++ )
 			{
@@ -607,7 +637,14 @@ function KRKComp( comp )
 					try { krklayer[f]( children[j] ) ; }
 					catch( err )
 					{
-						alert( "Error in performing an XML.\n\nComp: " + this.name + "\nLayer: " + krklayer.name + '\nCode: ' + err.number + '\nMessage: ' + err.description + "\n\n\n" + children[j].toXMLString( ) ) ;
+						this.throw(
+							{
+								message: err.message === '' || ! err.message || err.message == err.description ? "Error performing XML" : err.message ,
+								comp: this.name ,
+								layer: krklayer.name ,
+								xml: children[i]
+							} , err
+						) ;
 						return false ;
 					}
 				}
@@ -684,6 +721,7 @@ function KRKLayer( layer , options )
 	this.commitAnimators;
 	this.commitProperties;
 	this.second = null ;
+	this.blending = undefined ;
 	this.setprop = [ ] ;
 	
 	/**
@@ -809,6 +847,19 @@ function KRKLayer( layer , options )
 		{
 			this.readPresetTimes( ) ;
 		}
+		if ( this.options.blending )
+		{
+		}
+		var blend ;
+		if ( blend = options.blending )
+		{
+			blend = blend.toUpperCase().replace( /\s+/g , '_' ) ;
+			if ( typeof BlendingMode[blend] != 'undefined' )
+			{
+				this.blending = blend;
+			}
+ 		}
+		this.disabled = this.options.disabled ;
 		this.addlayers = [ ] ;
 		this.layers = { } ;
 		this.layers2 = { } ;
@@ -859,10 +910,10 @@ function KRKLayer( layer , options )
 	
 	this.@p = this.@prop = this.@property = function( x )
 	{
-		var xx = { syl: this.xml_bool( x.@syl ) ? true : undefined , unnorm: this.xmlvalue( x.@unnorm ) , pos: this.xmlvalue( x.@pos ) } ;
-		var comp = this.xmlvalue( x.@comp ) ;
-		var layer = this.xmlvalue( x.@layer ) ;
-		var link = this.xmlvalue( x.@link ) ;
+		var xx = { syl: this.xml_bool( x.@syl ) ? true : undefined , unnorm: this.xml_value( x.@unnorm ) , pos: this.xml_value( x.@pos ) } ;
+		var comp = this.xml_value( x.@comp ) ;
+		var layer = this.xml_value( x.@layer ) ;
+		var link = this.xml_value( x.@link ) ;
 		if ( link )
 		{
 			if ( comp && layer )
@@ -885,7 +936,7 @@ function KRKLayer( layer , options )
 
 	this.@a = this.@anim = this.@animate = this.@animator = function( x )
 	{
-		this.a( x.@name.toString() , { syl: this.xml_bool( x.@syl ) ? true : undefined, unnorm: this.xmlvalue( x.@unnorm ) } ) ;
+		this.a( x.@name.toString() , { syl: this.xml_bool( x.@syl ) ? true : undefined, unnorm: this.xml_value( x.@unnorm ) } ) ;
 	}
 
 	/**
@@ -940,14 +991,14 @@ function KRKLayer( layer , options )
 
 	this.@s = this.@set = this.@setting = function( x )
 	{
-		var layer = this.xmlvalue( x.@layer ) ;
+		var layer = this.xml_value( x.@layer ) ;
 		if ( layer )
 		{
-			this.s( this.xmlvalue( x.@name ) , 'layer' , layer ) ;
+			this.s( this.xml_value( x.@name ) , 'layer' , layer ) ;
 		}
 		else
 		{
-			this.s( this.xmlvalue( x.@name ) , this.xmlvalue( x.@property ) , this.xmlvalue( x.@value ) ) ;
+			this.s( this.xml_value( x.@name ) , this.xml_value( x.@property ) , this.xml_value( x.@value ) ) ;
 		}
 		return this ;
 	}
@@ -1165,12 +1216,12 @@ function KRKLayer( layer , options )
 					{
 						try {
 						property = this.getProperty( newLayer , this.setprop[l].name ) ;
-						property[ this.setprop[l].property ] = this.setprop[l].value ; } catch(err) { throw( { number: err.number , layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"  ("+this.setprop[l].property+")\nWith value: " + this.setprop[l].value  } ) ; }
+						property[ this.setprop[l].property ] = this.setprop[l].value ; } catch(err) { this.throw( { layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"  ("+this.setprop[l].property+")\nWith value: " + this.setprop[l].value  } , err ) ; }
 					}
 					else
 					{
 						try{
-						newLayer[this.setprop[l].name] = this.setprop[l].property ; } catch(err){ throw( { number: err.number , layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"  ("+this.setprop[l].property + ')'  } ) ; }
+						newLayer[this.setprop[l].name] = this.setprop[l].property ; } catch(err){ this.throw( { layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"  ("+this.setprop[l].property + ')'  } , err ) ; }
 					}
 				}
 			}
@@ -1421,6 +1472,11 @@ function KRKLayer( layer , options )
 			this.resetMarkers( o.startTime , o.endTime ) ;
 			this.layers[layer.name] = layer;
 			this.syl = syllableNumber != undefined || syllableNumber != null ? null : syllableNumber ;
+			if ( typeof this.blending != 'undefined' )
+			{
+				layer.blendingMode = BlendingMode[this.blending] ;
+			}
+			
 			return layer ;
 		}
 		return null ;		
@@ -1545,29 +1601,36 @@ function KRKLayer( layer , options )
 		var z = { };
 		var y ;
 		var m , i ;
-		var o = { unnorm: this.xmlvalue( x.@unnorm ) } ;
-		if ( typeof ( y = this.xmlvalue( x.@style ) ) != 'undefined' ? true :  typeof ( y = this.xmlvalue( x.@name ) ) != 'undefined' )
+		var o = { unnorm: this.xml_value( x.@unnorm ) } ;
+		var blend = null ;
+		if ( typeof ( y = this.xml_value( x.@style ) ) != 'undefined' ? true :  typeof ( y = this.xml_value( x.@name ) ) != 'undefined' )
 		{
 			z.style = this.arrayKeys( [y.toLowerCase()]  );
 		}
 
-		if ( typeof ( y = this.xmlvalue( x.@layer ) ) != 'undefined' )
+		if ( typeof ( y = this.xml_value( x.@layer ) ) != 'undefined' )
 		{
 			z.layer = this.arrayKeys( y.match( /\d+/g )  );
 		}
-		if ( typeof ( y = this.xmlvalue( x.@line ) ) != 'undefined' )
+		if ( typeof ( y = this.xml_value( x.@line ) ) != 'undefined' )
 		{
 			z.line = this.arrayKeys( y.match( /\d+/g )  );
 		}
 		if ( this.xml_bool( x.@syl , true ) )
 		{
-			y = this.xmlvalue( x.@syl ) ;
+			y = this.xml_value( x.@syl ) ;
 			o.syl = true ;
 			if ( m = String( y ).match( /\d+/g ) )
 			{
 				z.syl = this.arrayKeys( m );
 			}
 		}
+		
+		if ( this.xml_bool( x.@disabled ) )
+		{
+			o.disabled = true ;
+		}
+	
 		this.l(z , o ) ;
 	}
 
@@ -3565,7 +3628,7 @@ function KRKCommon( )
 	}
 }
 
-KRKCommon.prototype.xmlvalue = function( x )
+KRKCommon.prototype.xml_value = function( x )
 {
 	var s = x.toString( ) ;
 	if ( s == '' )
@@ -3602,6 +3665,54 @@ KRKCommon.prototype.xml_bool = function( x , nonzero )
 	return undefined ;
 }
 
+KRKCommon.error_alert = function( e )
+{
+	var syntax =
+	{
+		"message": "" ,
+		"comp": "Comp: " ,
+		"layer": "Layer: " ,
+		"number": "Error Code: " ,
+		"line": "KRK's Line #" ,
+		"name": "Name: " ,
+		"description": "Description: " ,
+		"xml": "--== XML ==--\n"
+	} ;
+	var $string , i , text ; 
+	if ( e instanceof Object )
+	{
+		$string = '' ;
+		for ( i in syntax )
+		{
+			text = e[i] ;
+			if ( typeof text != 'undefined' )
+			{
+				if ( $string !== '' )
+				{
+					$string += "\n" ;
+				}
+				$string += syntax[i] + ( typeof text == 'xml' ? text.toXMLString( ) : text ) ;
+			}
+		}
+		if ( $string !== '' )
+		{
+			alert($string);
+		}
+	}
+}
+KRKCommon.prototype.throw = function( new_err , old_err )
+{
+	var i ;
+	for ( i in old_err )
+	{
+		if ( typeof new_err[i] == 'undefined' )
+		{
+			new_err[i] = old_err[i] ;
+		}
+	}
+	throw new_err ;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -3627,32 +3738,39 @@ KRKProperty.prototype = new KRKCommon( ) ;
 	var krkx;
 try{ !krk } catch( err ){ krk = null ; }
 
-if ( !krk )
-{
-	var karaoke = new KRKProject( ) ;
-/*	karaoke.codes( ) ;
-	if ( karaoke.evaluate( ) == null )
-	{	*/
-	if ( krkx = karaoke.@codes( ) )
+	if ( !krk )
 	{
-		karaoke.begin( ) ;
-		karaoke.removeAllLayers( ) ;
-		if ( confirm( 'It seems to be good to go!!\nThe generated layers also have been purged.\n\nDo you want to commit your settings and generate the layers?\n\nNote: It may take a few minutes to generate depending upon how many layers and properties required to be generated.' ) )
+		try
 		{
-			try{ karaoke.commit( ) ; } catch(err){ alert( (err.comp ? "Comp: " + err.comp : "" ) + (err.layer ? "Layer: " + err.layer: "" )+ "\nCode: " + err.number + "\nMessage:\n" + err.description ); }
-			//karaoke.commit( ) ;			
-			karaoke.topLayers( ) ;
+			var karaoke = new KRKProject( ) ;
+		/*	karaoke.codes( ) ;
+			if ( karaoke.evaluate( ) == null )
+			{	*/
+			if ( krkx = karaoke.@codes( ) )
+			{
+				karaoke.begin( ) ;
+				karaoke.removeAllLayers( ) ;
+				if ( confirm( 'It seems to be good to go!!\nThe generated layers also have been purged.\n\nDo you want to commit your settings and generate the layers?\n\nNote: It may take a few minutes to generate depending upon how many layers and properties required to be generated.' ) )
+				{
+					try{ karaoke.commit( ) ; } catch(err){ alert( (err.comp ? "Comp: " + err.comp : "" ) + (err.layer ? "Layer: " + err.layer: "" )+ "\nCode: " + err.number + "\nMessage:\n" + err.description ); }
+					//karaoke.commit( ) ;			
+					karaoke.topLayers( ) ;
+				}
+				karaoke.end( ) ;
+			}
+			else if ( typeof krkx == 'undefined' )
+			{
+				alert( 'Possible Reasons of Failure:\n\n1.  "KRK" Composition is not found.\n2.  You have not added any compositions in KRK Comp,\n3.  Make sure at least one comp layer in "KRK" comp is NOT SHY.\n4.  You have not provided the karaoke .ass paste in the topmost text layer.' ) ;
+			}
+			try{ karaoke.destruct( ) ;
+			delete karaoke ;
+			delete krk ; } catch(e){ } 
+		} 
+		catch( e )
+		{
+			KRKCommon.error_alert( e ) ;
 		}
-		karaoke.end( ) ;
 	}
-	else if ( typeof krkx == 'undefined' )
-	{
-		alert( 'Possible Reasons of Failure:\n\n1.  "KRK" Composition is not found.\n2.  You have not added any compositions in KRK Comp,\n3.  Make sure at least one comp layer in "KRK" comp is NOT SHY.\n4.  You have not provided the karaoke .ass paste in the topmost text layer.' ) ;
-	}
-	try{ karaoke.destruct( ) ;
-	delete karaoke ;
-	delete krk ; } catch(e){ } 
-}
 }
 
 
