@@ -43,6 +43,7 @@ Enclosing the following tags.
   * no is a little optimization in calculations, where the KRK Syllable won't be generated.  However, if you enable 'no', you won't be able to collect positional values.
   * blend: blending mode.  Available modes: _add, alpha add, classic color burn, classic color dodge, classic difference, color, color burn, color dodge, dancing dissolve, darken, darker color, difference, dissolve, exclusion, hard light, hard mix, hue, lighten, lighter color, linear burn, linear dodge, linear light, luminescent premul, luminosity, multiply, normal, overlay, pin light, saturation, screen, silhouete alpha, silhouette luma, soft light, stencil alpha, stencil luma, vivid light_
   * alias = alias name (instead of based on name + repeated index)
+  * threed = true if 3D is enabled, false if 3D is disabled, (default, use the layer's 3D setting)
   * precomp = boolean (True/False) ... If this is true, it will automatically precompose everything one-by-one after everything is run.  Please note: It will create a new folder called __KRK.  Everything under here will be deleted initially.  This is to ensure that the precompositions are not re-generated.
 
 ===line===
