@@ -418,7 +418,7 @@ function KRKProject( K )
 					if ( layer.comment )
 					{
 						comp = this.add( layer.source ) ;
-						if ( ! comp.configure( layer.comment ) ) { return false ; }
+						if ( ! comp.configure( layer.comment , o ) ) { return false ; }
 					}
 				}
 				
@@ -578,11 +578,13 @@ function KRKComp( comp )
 		return null ;
 	}
 
-	this.configure = function( xml )
+	this.configure = function( xml , krk )
 	{
 		var i = 0 , j ;
 		var f ;
 		var layer , krklayer , children ;
+		var disabled ;
+		var fromComp , toComp , fromLayer , toAlias , layername , layer2 , overwrite ;		
 		try
 		{
 			this.xml = new XML ('<root>'+xml+'</root>') ;
@@ -605,7 +607,67 @@ function KRKComp( comp )
 			} , err ) ;
 		}
 		// layers
-		var disabled ;
+
+		i = 0 ;
+		while( typeof( layer = this.xml.copy[i] ) == 'xml' )
+		{
+			i ++ ;
+			fromComp = this.xml_value( layer.@from ) ;
+			toComp = this.xml_value( layer.@to ) ;
+			fromLayer = this.xml_value( layer.@layer ) ;
+			toAlias = this.xml_value( layer.@name ) ;
+			overwrite = this.xml_bool( layer.@replace ) ;
+			overwrite = typeof overwrite == 'undefined' ? 1 : overwrite ;
+			try {
+				fromComp = fromComp ? krk.layer( fromComp ).source : this.comp ;
+				toComp = toComp ? krk.layer( toComp ).source : this.comp ;
+				if ( fromComp != toComp && fromComp && toComp )
+				{
+					if ( fromComp )
+					{
+						layer = fromComp.layer( fromLayer ) ;
+						layername = toAlias ? toAlias : layer.name ;
+						if ( layer2 = toComp.layer( layername ) )
+						{
+							if ( overwrite )
+							{
+								while ( 1 )
+								{
+									try{ layer2.remove( ) }
+									catch( err )
+									{
+										break ;
+									}
+								}
+							}
+						}
+						else
+						{
+							overwrite = 1 ;
+						}
+					}
+					if ( overwrite )
+					{
+						if ( toAlias )
+						{
+							layername = layer.name ;
+							layer.name = toAlias ;
+						}					
+						layer.copyToComp( toComp ) ;
+						if ( toAlias )
+						{
+							layer.name = layername ;
+						}
+					}
+				}
+			} catch( err )
+			{
+				this.throw( {
+					xml: this.xml.copy[i]
+				} , err) ;
+			}
+		}
+		
 		while( typeof ( layer = this.xml.layer[i] ) == 'xml' )
 		{
 			i ++ ;
@@ -3653,7 +3715,7 @@ KRKCommon.prototype.xml_bool = function( x , nonzero )
 		{
 			return undefined ;
 		}
-		if ( x.match( nonzero ? /^\s*(none|no|false)\s*/g : /^\s*(none|no|0|false)\s*/g ) )
+		if ( x.match( nonzero ? /^\s*(none|no|false|non|nothing|void)\s*/g : /^\s*(none|no|0+|false|non|nothing|void)\s*/g ) )
 		{
 			return false ;
 		}
