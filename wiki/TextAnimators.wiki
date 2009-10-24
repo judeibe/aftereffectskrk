@@ -1,13 +1,13 @@
 #summary These are some of the tips you can work with using text animators.
-#labels Featured
 
 = Introduction =
 In this guideline, you will learn a shear number of syllable and line effects you can do with this script.  It's based on how you configure your animators.
 
-= Space Control =
-Space controls are no longer supported as of version 0.50.  It's now done automatically.  To enable per-syllable effect, you must do the following:
+= Auto Zero-Space Control =
+The addition of zero-spacing into text animators enables you to perform effect on the entire syllable rather than individual characters.  To enable per-syllable effect, you must do the following:
   # Text -> More Options -> Anchor Point Grouping
   # Set that to "Word"
+  # Alternative, you can add in space="true" in <line />.
   # It will now be treated as per-syllable effect.  Note you need to use Word as a mode effect.
 
 Basically, with this feature enabled, the script will add spaces after every syllable.  You can then adjust the spacing using your defined slider control.  The point of this is to enable Per-syllable effect, i.e. the entire syllable is affected rather than just the character or word itself.
@@ -16,7 +16,7 @@ Basically, with this feature enabled, the script will add spaces after every syl
 This allows the per-character effects when singing on the syllable, so that the effects will start from the first character and end at the last character.  To use this feature, make sure you do the following:
   * Range Selector -> Advanced -> Mode = Characters: This allows effects to be performed on the character-basis
   * Range Selector -> Advanced -> Mode = Characters Excluding Space: This allows effects to be performed on the character-basis without spaces.  This works.
-  * This feature also works if Space Control is used.
+  * This feature also works if Auto Zero-Space Control is used.
 
 = Per-Syllable Effect =
 This allows the per-sylalble effect when singing on the syllable, so that the effects will shine exactly on the syllable.  It's good if you're planning to scale on syllable.  To use this feature, make sure you do the following:
@@ -31,7 +31,7 @@ This allows the per-sylalble effect when singing on the syllable, so that the ef
 To use this feature, create two layers.  One is called "In" and the other is called "Out".  Basically, you can create nice transition effects using text animators.
   * In: Range Selector->Advanced->Shape = Ramp Up; keyframes for selectors: Start = 0% to 100% at start, End = 100% at all times.
   * Out: Range Selector->Advanced->Shape = Ramp Down; keyframes for selectors: Start = 0% at all times, End = 0% to 100% at the end.
-  * .a( ['In' , 'Out'] )
+  * <a name="In" />
 
 = One Layered Syllable Effects =
 The settings are as follows:
@@ -62,9 +62,13 @@ Do the following:
      * Check off EYE (Hide it)
   * Use the following codes: (say, Karaoke your template layer name)
 {{{
-add( "Karaoke" )
-.a( ["on" , "kon" ] , true )
+<layer name="Karaoke" alias="karaoke_on">
+	<a name="on" syl="yes" />
+	<a name="kon" syl="yes" />
+</layer>
 
-add( "Karaoke" )
-.a( ["off" , "koff" ] , true )
+<layer name="Karaoke" alias="karaoke_off">
+	<a name="off" syl="yes" />
+	<a name="koff" syl="yes" />
+</layer>
 }}}
