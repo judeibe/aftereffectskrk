@@ -70,8 +70,8 @@ Do the following:
 
 <!-- I use alias so that these layers 
 can be referenced later on.
-Or else, KRK will automatically create
-Karaoke_2 as the alias for the following layers -->
+Or else, KRK will automatically make 
+Karaoke_2 as the alias for the following layer -->
 
 <layer name="Karaoke" alias="karaoke_off">
 	<a name="off" syl="yes" />
