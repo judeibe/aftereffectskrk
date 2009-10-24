@@ -68,7 +68,10 @@ Do the following:
 	<a name="kon" syl="yes" />
 </layer>
 
-<!-- I use alias so that these layers can be referenced later on.  Or else, KRK will automatically create Karaoke_2 as the alias for the following layers -->
+<!-- I use alias so that these layers 
+can be referenced later on.
+Or else, KRK will automatically create
+Karaoke_2 as the alias for the following layers -->
 
 <layer name="Karaoke" alias="karaoke_off">
 	<a name="off" syl="yes" />
