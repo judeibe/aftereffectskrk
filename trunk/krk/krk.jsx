@@ -612,7 +612,7 @@ function KRKComp( comp )
 		var f ;
 		var layer , krklayer , children ;
 		var disabled ;
-		var fromComp , toComp , fromLayer , toAlias , layername , layer2 , overwrite ;		
+		var fromComp , toComp , fromLayer , toAlias , layername , layer2 , overwrite , threed ;		
 		try
 		{
 			this.xml = new XML ('<root>'+xml+'</root>') ;
@@ -701,6 +701,8 @@ function KRKComp( comp )
 			i ++ ;
 			disabled = this.xml_bool( layer.@disabled) ? 1 : undefined  ;
 			try { 
+				threed = this.xml_bool( layer.@threed)
+				if ( typeof threed == 'undefined' ) { threed = this.xml_bool( layer.@threeD ) ; } 
 				krklayer = this.add( this.xml_value( layer.@name  ) , 
 				{
 					space: this.xml_value( layer.@space ) , 
@@ -708,7 +710,8 @@ function KRKComp( comp )
 					no: this.xml_value( layer.@no ) , 
 					disabled: this.xml_bool(layer.@disabled) , 
 					blending: this.xml_value( layer.@blend ) ,
-					precomp: this.xml_bool( layer.@precomp )
+					precomp: this.xml_bool( layer.@precomp ) ,
+					threed: typeof threed == 'undefined' ? undefined : threed
 				} ) ; 
 			} catch( err ) { 
 				var description = 
@@ -815,6 +818,7 @@ function KRKLayer( layer , options )
 	this.blending = undefined ;
 	this.setprop = [ ] ;
 	this.precomp = false ;
+	this.threed = undefined ;
 	
 	/**
 	 * A function to resynchronize the properties on this object
@@ -953,6 +957,7 @@ function KRKLayer( layer , options )
 		{
 			this.precomp = true ;
 		}
+		this.threed = this.options.threed ;
 		this.disabled = this.options.disabled ;
 		this.addlayers = [ ] ;
 		this.layers = { } ;
@@ -1204,7 +1209,7 @@ function KRKLayer( layer , options )
 
 	this.commit = function( )
 	{
-		var i , j , l ;
+		var i , j , l , m ;
 		var name = { } ;
 		var object = { } ;
 		var layerName ;
@@ -1213,7 +1218,8 @@ function KRKLayer( layer , options )
 		var newLayer , k ;
 		this.old.selected = this.old.enabled = false ;
 		var tmp  ;
-		var item , $name ;
+		var item , item0 , $name ;
+		var threed , index ;
 		var $project = this.getParent("project")  ;
 		// Check for default properties:
 		if ( this.old("Text") )
@@ -1256,6 +1262,10 @@ function KRKLayer( layer , options )
 			if ( !layer ) { continue ; }
 			layerName = this.parseLayerName( layer.name ) ;
 			this.layer = layer ;
+			if ( typeof this.threed != 'undefined' )
+			{
+				try{ layer.threeDLayer = this.threed } catch(e){ }
+			}
 			tmp = this.commitProperties[layerName] ;
 			for ( j in tmp ? tmp : this.properties )
 			{
@@ -1323,10 +1333,17 @@ function KRKLayer( layer , options )
 			// precomposing
 				if ( this.precomp )
 				{
+					threed  = newLayer.threeDLayer ;
 					$name = newLayer.name ;
-					item = this.comp.comp.layers.precompose( [ newLayer.index ] , $project.tempname( )  , true ) ;
-					item.name = $name ;
+					item = this.comp.comp.layers.precompose( [ index = newLayer.index ] , $name , true ) ;
 					item.parentFolder = $project.folder ;
+					item0 = this.comp.comp.layers[index];
+					if ( item0.canSetCollapseTransformation )
+					{
+						item0.collapseTransformation = true ;
+					}
+					item0.threeDLayer = threed ;
+					item0.name = $name ;
 				}
 			}
 		}
@@ -1688,12 +1705,17 @@ function KRKLayer( layer , options )
 		return this ;
 	}
 	
-	this.arrayKeys = function( a )
+	this.arrayKeys = function( a , decnum)
 	{
 		var i ;
 		var o = { };
+		var s ;
 		for ( i = 0 ; i < a.length ; i ++ )
 		{
+			if ( decnum ? s = Number(a[i]) : false )
+			{
+				a[i] ++ ;
+			}
 			o[a[i]] = true ;
 		}
 		return o;
@@ -1709,16 +1731,16 @@ function KRKLayer( layer , options )
 		var blend = null ;
 		if ( typeof ( y = this.xml_value( x.@style ) ) != 'undefined' ? true :  typeof ( y = this.xml_value( x.@name ) ) != 'undefined' )
 		{
-			z.style = this.arrayKeys( [y.toLowerCase()]  );
+			z.style = this.arrayKeys( [y.toLowerCase()] );
 		}
 
 		if ( typeof ( y = this.xml_value( x.@layer ) ) != 'undefined' )
 		{
-			z.layer = this.arrayKeys( y.match( /\d+/g )  );
+			z.layer = this.arrayKeys( y.match( /\d+/g ) );
 		}
 		if ( typeof ( y = this.xml_value( x.@line ) ) != 'undefined' )
 		{
-			z.line = this.arrayKeys( y.match( /\d+/g )  );
+			z.line = this.arrayKeys( y.match( /\d+/g ) , 1 );
 		}
 		if ( this.xml_bool( x.@syl , true ) )
 		{
@@ -1726,7 +1748,7 @@ function KRKLayer( layer , options )
 			o.syl = true ;
 			if ( m = String( y ).match( /\d+/g ) )
 			{
-				z.syl = this.arrayKeys( m );
+				z.syl = this.arrayKeys( m , 1 );
 			}
 		}
 		
