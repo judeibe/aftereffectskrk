@@ -560,6 +560,7 @@ function KRKComp( comp )
 	this.unique = true ;
 	this.config = null ;
 	this.xml = null ;
+	this.markers = null ;
 	/**
 	 * constructor function
 	 * @param comp -- After-Effects Comp object (can be numeric (index), string, or After-Effects Comp object)
@@ -606,13 +607,37 @@ function KRKComp( comp )
 		return null ;
 	}
 
+	this.getTimelineMarkers = function( )
+	{
+		var textLayer = this.comp.layers.addText('');
+		var startTime = this.comp.startTime ;
+		var i , marker , markers , text ;
+// The only way to get composition markers is to use expressions.
+		textLayer.Text.sourceText.expression = "var m=thisComp.marker;var x='';for(var i=1;i<=m.numKeys;i++){x+=(x==''?'':'!!KRK!!')+m.key(i).time+'!!KrK!!'+m.key(i).comment;}x" ;
+		textLayer.Text.sourceText.expressionEnabled = true;
+		text = String(textLayer.Text.sourceText.value) ;
+		textLayer.remove( );
+		markers = text.split('!!KRK!!');
+		for ( i = 0 ; i < markers.length ; i ++ )
+		{
+			marker = markers[i].split('!!KrK!!',2);
+			if ( marker.length < 2 )
+			{
+				continue ;
+			}
+			if ( !this.markers )
+			{
+				this.markers = [ ] ;
+			}
+			this.markers.push( { time: parseFloat( marker[0] )  , comment: marker[1] } ) ;
+		}
+	}
+
 	this.configure = function( xml , krk )
 	{
-		var i = 0 , j ;
+		var i = 0 ;
 		var f ;
-		var layer , krklayer , children ;
-		var disabled ;
-		var fromComp , toComp , fromLayer , toAlias , layername , layer2 , overwrite , threed ;		
+		var layer , children ;
 		try
 		{
 			this.xml = new XML ('<root>'+xml+'</root>') ;
@@ -634,118 +659,124 @@ function KRKComp( comp )
 				xml: xml__
 			} , err ) ;
 		}
+		this.getTimelineMarkers( ) ;
 		// layers
-
-		i = 0 ;
-		while( typeof( layer = this.xml.copy[i] ) == 'xml' )
+		children = this.xml.elements( );
+		for ( i = 0 ; i < children.length( ) ; i ++ )
 		{
-			i ++ ;
-			fromComp = this.xml_value( layer.@from ) ;
-			toComp = this.xml_value( layer.@to ) ;
-			fromLayer = this.xml_value( layer.@layer ) ;
-			toAlias = this.xml_value( layer.@name ) ;
-			overwrite = this.xml_bool( layer.@replace ) ;
-			overwrite = typeof overwrite == 'undefined' ? 1 : overwrite ;
-			try {
-				fromComp = fromComp ? krk.layer( fromComp ).source : this.comp ;
-				toComp = toComp ? krk.layer( toComp ).source : this.comp ;
-				if ( fromComp != toComp && fromComp && toComp )
+			if ( typeof ( this[f = '@' + (children[i].name().toString()).toLowerCase()] ) == 'function' )
+			{
+				this[f]( children[i] , krk ) ;
+			}
+		}
+		return true ;
+	}
+
+	this.@copy = function( layer , krk )
+	{
+		var layer2 , layername ;
+		var fromComp = this.xml_value( layer.@from ) ;
+		var toComp = this.xml_value( layer.@to ) ;
+		var fromLayer = this.xml_value( layer.@layer ) ;
+		var toAlias = this.xml_value( layer.@name ) ;
+		var overwrite = this.xml_bool( layer.@replace ) ;
+		overwrite = typeof overwrite == 'undefined' ? 1 : overwrite ;
+		try {
+			fromComp = fromComp ? krk.layer( fromComp ).source : this.comp ;
+			toComp = toComp ? krk.layer( toComp ).source : this.comp ;
+			if ( fromComp != toComp && fromComp && toComp )
+			{
+				if ( fromComp )
 				{
-					if ( fromComp )
+					layer = fromComp.layer( fromLayer ) ;
+					layername = toAlias ? toAlias : layer.name ;
+					if ( layer2 = toComp.layer( layername ) )
 					{
-						layer = fromComp.layer( fromLayer ) ;
-						layername = toAlias ? toAlias : layer.name ;
-						if ( layer2 = toComp.layer( layername ) )
+						if ( overwrite )
 						{
-							if ( overwrite )
+							while ( 1 )
 							{
-								while ( 1 )
+								try{ layer2.remove( ) }
+								catch( err )
 								{
-									try{ layer2.remove( ) }
-									catch( err )
-									{
-										break ;
-									}
+									break ;
 								}
 							}
 						}
-						else
-						{
-							overwrite = 1 ;
-						}
 					}
-					if ( overwrite )
+					else
 					{
-						if ( toAlias )
-						{
-							layername = layer.name ;
-							layer.name = toAlias ;
-						}					
-						layer.copyToComp( toComp ) ;
-						if ( toAlias )
-						{
-							layer.name = layername ;
-						}
+						overwrite = 1 ;
 					}
 				}
-			} catch( err )
-			{
-				this.throw( {
-					xml: this.xml.copy[i]
-				} , err) ;
+				if ( overwrite )
+				{
+					if ( toAlias )
+					{
+						layername = layer.name ;
+						layer.name = toAlias ;
+					}					
+					layer.copyToComp( toComp ) ;
+					if ( toAlias )
+					{
+						layer.name = layername ;
+					}
+				}
 			}
-		}
-		
-		while( typeof ( layer = this.xml.layer[i] ) == 'xml' )
+		} catch( err )
 		{
-			i ++ ;
-			disabled = this.xml_bool( layer.@disabled) ? 1 : undefined  ;
-			try { 
-				threed = this.xml_bool( layer.@threed)
-				if ( typeof threed == 'undefined' ) { threed = this.xml_bool( layer.@threeD ) ; } 
-				krklayer = this.add( this.xml_value( layer.@name  ) , 
-				{
-					space: this.xml_value( layer.@space ) , 
-					alias: this.xml_value( layer.@alias ) , 
-					no: this.xml_value( layer.@no ) , 
-					disabled: this.xml_bool(layer.@disabled) , 
-					blending: this.xml_value( layer.@blend ) ,
-					precomp: this.xml_bool( layer.@precomp ) ,
-					threed: typeof threed == 'undefined' ? undefined : threed
-				} ) ; 
-			} catch( err ) { 
-				var description = 
-					err.number == 21 ? "Layer's name is invalid." : undefined ;
-				this.throw( {
-					message: 'Error adding a layer into comp.' ,
-					comp: this.name ,
-					layer: layer.@name ,
-					xml: layer.toString().match( /^[^>]+/ )[0] + '>...' ,
-					description: description
-				} , err ) ; }
-			children = layer.elements( );
-			for ( j = 0 ; j < children.length( ) ; j ++ )
+			this.throw( {
+				xml: this.xml.copy[i]
+			} , err) ;
+		}
+	}
+
+	this.@layer = function( layer , krk )
+	{
+		var disabled = this.xml_bool( layer.@disabled) ? 1 : undefined  ;
+		var threed , krklayer , children , f , j , i ;
+		try { 
+			threed = this.xml_bool( layer.@threed)
+			if ( typeof threed == 'undefined' ) { threed = this.xml_bool( layer.@threeD ) ; } 
+			krklayer = this.add( this.xml_value( layer.@name  ) , 
 			{
-				if ( typeof ( krklayer[f = '@' + (children[j].name().toString()).toLowerCase()] ) == 'function' )
+				space: this.xml_value( layer.@space ) , 
+				alias: this.xml_value( layer.@alias ) , 
+				no: this.xml_value( layer.@no ) , 
+				disabled: this.xml_bool(layer.@disabled) , 
+				blending: this.xml_value( layer.@blend ) ,
+				precomp: this.xml_bool( layer.@precomp ) ,
+				threed: typeof threed == 'undefined' ? undefined : threed
+			} ) ; 
+		} catch( err ) { 
+			var description = 
+				err.number == 21 ? "Layer's name is invalid." : undefined ;
+			this.throw( {
+				message: 'Error adding a layer into comp.' ,
+				comp: this.name ,
+				layer: layer.@name ,
+				xml: layer.toString().match( /^[^>]+/ )[0] + '>...' ,
+				description: description
+			} , err ) ; }
+		children = layer.elements( );
+		for ( j = 0 ; j < children.length( ) ; j ++ )
+		{
+			if ( typeof ( krklayer[f = '@' + (children[j].name().toString()).toLowerCase()] ) == 'function' )
+			{
+				try { krklayer[f]( children[j] ) ; }
+				catch( err )
 				{
-					try { krklayer[f]( children[j] ) ; }
-					catch( err )
-					{
-						this.throw(
-							{
-								message: err.message === '' || ! err.message || err.message == err.description ? "Error performing XML" : err.message ,
-								comp: this.name ,
-								layer: krklayer.name ,
-								xml: children[i]
-							} , err
-						) ;
-						return false ;
-					}
+					this.throw(
+						{
+							message: err.message === '' || ! err.message || err.message == err.description ? "Error performing XML" : err.message ,
+							comp: this.name ,
+							layer: krklayer.name ,
+							xml: children[i]
+						} , err
+					) ;
 				}
 			}
 		}
-		
-		return true ;
 	}
 
 	/**
@@ -1512,10 +1543,7 @@ function KRKLayer( layer , options )
 			marker.removeKey( 1 ) ;
 		}
 		marker.setValueAtTime( startTime , new MarkerValue( text ) ) ;
-		if ( endMarker )
-		{
-			marker.setValueAtTime( endTime , new MarkerValue("") ) ;
-		}
+		marker.setValueAtTime( endTime , new MarkerValue("") ) ;
 	}
 	/**
 	 * create a new layer based on the current template layer
@@ -1808,46 +1836,67 @@ function KRKLayer( layer , options )
 		o.startTime = o.inTime = layer.inPoint ;
 		o.endTime = o.outTime = layer.outPoint ;
 	
-		if ( markers = layer("Marker") )
+		if ( ( markers = layer("Marker") ) ? markers.numKeys : false )
 		{
 			for ( i = 1 ; i <= markers.numKeys ; i ++ )
 			{
 				marker = markers.keyValue( i ) ;
 				comment = marker.comment.toLowerCase() + " " + marker.chapter.toLowerCase() ;
-				if ( comment.match( /start|\[/i ) )
-				{
-					o.startTime = markers.keyTime( i ) ;
-					if ( a = comment.match( /unnorm(=(\w+))?/i ) )
-					{
-						o.unnorm = a[2] ? a[2] : 'start' ;
-					}
-					o.startMarker = i ;
-				}
-				if ( comment.match( /end|\]/i ) )
-				{
-					o.endTime = markers.keyTime( i ) ;
-					if ( a = comment.match( /unnorm(=(\w+))?/i ) )
-					{
-						o.unnorm = a[2] ? a[2] : 'end';
-					}
-					o.endMarker = i ;
-				}
-				if ( comment.match( /in|\</i ) )
-				{
-					o.inTime = markers.keyTime( i ) ;
-					o.inUnnorm = comment.match( /unnorm(=(\w+))?/i ) ? true : false ;
-					o.inMarker = i ;
-				}
-				if ( comment.match( /out|\>/i ) )
-				{
-					o.outTime = markers.keyTime( i ) ;
-					o.outUnnorm = comment.match( /unnorm/i ) ? true : false ;
-					o.outMarker = i ;
-				}
+				this.setTimeline( comment , markers.keyTime(i) , o , i ) ;
+			}
+		}
+		else if ( ( markers = this.comp.markers ) ? this.comp.markers.length > 0 : false )
+		{
+			for ( i = 0 ; i < markers.length ; i ++ )
+			{
+				comment = String(markers[i].comment).toLowerCase() ;
+				this.setTimeline( comment , parseFloat( markers[i].time ) - this.layer.startTime , o ) ;
 			}
 		}
 		this.time = o ;
 		return this ;
+	}
+	/**
+	 * set time line
+	 * @param comment -- comment, etc
+	 * @param time -- time
+	 * @param o -- object (return value)
+	 */
+	this.setTimeline = function( comment , time , o , i ) 
+	{
+		var a;
+		time = parseFloat(time);
+		if ( comment.match( /start|\[/i ) )
+		{
+			o.startTime = time ;
+			if ( a = comment.match( /unnorm(=(\w+))?/i ) )
+			{
+				o.unnorm = a[2] ? a[2] : 'start' ;
+			}
+			o.startMarker = i ;
+		}
+		if ( comment.match( /end|\]/i ) )
+		{
+			o.endTime = time ;
+			if ( a = comment.match( /unnorm(=(\w+))?/i ) )
+			{
+				o.unnorm = a[2] ? a[2] : 'end';
+			}
+			o.endMarker = i ;
+		}
+		if ( comment.match( /in|\</i ) )
+		{
+			o.inTime = time ;
+			o.inUnnorm = comment.match( /unnorm(=(\w+))?/i ) ? true : false ;
+			o.inMarker = i ;
+		}
+		if ( comment.match( /out|\>/i ) )
+		{
+			o.outTime =time ;
+			o.outUnnorm = comment.match( /unnorm/i ) ? true : false ;
+			o.outMarker = i ;
+		}
+		return o;
 	}
 	
 	/**
@@ -2703,6 +2752,7 @@ function KRKProperty( property , options )
 		for ( i = 0 ; i < names.length ; i ++ )
 		{
 			name = names[i] ;
+			if ( name == 'temporalEase' && KeyframeInterpolationType.BEZIER != newKey['interpolationType'] ) { continue ; } // do not apply temporalEase if it's non-bezier interpolation.
 			method = "set" + name[0].toUpperCase( ) + name.substring( 1 ) + "AtKey" ;
 			key=this.keys[keyIndex-1] ;
 			a = newKey[name] == undefined ? key[name] : newKey[name] ;
