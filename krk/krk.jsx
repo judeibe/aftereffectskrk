@@ -2672,17 +2672,7 @@ function KRKProperty( property , options )
 		var a, b, j, k,key ;
 		if ( names == undefined )
 		{
-			names =
-			[	  "value"
-					, "interpolationType"
-					, "spatialTangents"
-					, "temporalEase"
-					, "temporalContinuous"
-					, "spatialContinuous"
-					, "roving"
-					, "selected"
-					, "temporalAutoBezier"
-					, "spatialAutoBezier" ] 
+			names = KRKCommon.KEYFRAMES;
 		}
 		if ( newKey.time != undefined )
 		{
@@ -3819,6 +3809,16 @@ KRKCommon.prototype.throw = function( new_err , old_err )
 	throw new_err ;
 }
 
+KRKCommon.KEYFRAMES = [	  "value"
+					, "interpolationType"
+					, "spatialTangents"
+					, "temporalEase"
+					, "temporalContinuous"
+					, "spatialContinuous"
+					, "roving"
+					, "selected"
+					, "temporalAutoBezier"
+					, "spatialAutoBezier" ]  ;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
