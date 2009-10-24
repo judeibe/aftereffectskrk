@@ -1,0 +1,103 @@
+#labels Featured
+== KRK XML Updates ==
+The old configuration is obsolete in this version, since it's a hackish way of implemented the configurator.  The new way is described as follows:
+
+  # The timeline marker is left untouched
+  # KRK Composition needs to have a text layer which has the Karaoke .ass codes only in the source text.
+  # Drag any compositions into KRK Composition if you want them to be processed.  Make sure they're below your text layer containing the .ass lyrics.
+  # Check on Shy Layer if you don't want them to be processed.  Check off the Shy Layer (hide) to process them.
+  # Open Layer comments.
+  # Type in XML Configurations next to the composition to process them.
+
+==XML Guideline==
+
+{{{
+<layer name="layerName" space="0" no="0">
+	<line name="styleName" layer="" syl="0" />
+	<animator name="animatorName" syl="1" unnorm="start|end" />
+	<property name="property.name" syl="1" pos="0" unnorm="1" />
+	<set name="layerProperty" property="property" value="0" />
+</layer>
+}}}
+
+
+As a side note, you cannot undo any changes made in the comments once you swapped out of the comment mode. To prevent this from happening, please edit these XML configurations with an external editor, then paste the XML config back into the box.
+
+
+layer:
+  * name is the layer's name
+  * space is the zero-space override.  Note, you cannot disable zero-space if the anchor point group is set to Word.
+  * no is a little optimization in calculations, where the KRK Syllable won't be generated.  However, if you enable 'no', you won't be able to collect positional values.
+  * alias = alias name (instead of based on name + repeated index)
+
+line: (abbreviate to l)
+  * name is the style name (alias: style)
+  * layer is the layer number in .ass (by default, it selects all layers)
+  * line is the line number
+  * syl indicates if you want to generate per-syllable. To select certain syllables, put in numbers.  Note syl="0" means syllable #0 in per-syllable mode.
+  * unnorm determines if the current line has unnormalized lead-in/lead-out.
+
+Note: you can add more than one {{{<line />}}} if you need more lines.  however, because this script does not check if the lines have been generated on the same layer, make sure you don't have any of the same lines repeated.
+
+{{{
+<line name="romaji" layer="0" line="1,2,3" syl="1,2" />
+}}}
+This will generate lines for style romaji, layer 0, lines 1,2, and 3, and syllable 1 and 2.
+
+{{{
+<line name="romaji" syl="syl" />
+}}}
+This will generate all syllables for romaji style, all layers, and all lines.
+
+{{{
+<l />
+}}}
+You get the idea... This will generate all lines in line mode (non-syllables).  make sure you don't have syl attributes to make it line-effect.
+
+animator: (abbreviate to a)
+  * name is the text animator's name
+  * syl is if it's a syllable timing (if syl=0, then it's a line timing)
+  * unnorm is if it's unnormalized
+
+{{{
+<a name="MyAnimator" syl="syl" />
+}}}
+
+property (abbreviate to p)
+  * name is the afx eval name for the properties (copy and paste from expressions)
+  * syl is if it's a syllable timing (if syl=0, then it's a line timing)
+  * unnorm is if it's unnormalized
+  * pos is to generate positional keys
+  * link -- link to another property (it requires either layer OR comp and layer) (if you need the property from the same layer, just make your own expression within the same layer)
+  * comp -- comp link
+  * layer -- layer link
+
+(Properties need at least one keyframe to process, so make sure you have a dummy keyframe if you want to link properties)
+
+For example, to generate syllable keyframes for a property, do the following:
+{{{
+<property name="transform.opacity" syl="syl" /> 
+}}}
+For example, to link transform.position (make sure you have keyframes here or else this will be ignored) to effect("Point Control")(1) via automatic expressions in Karaoke composition with a template layer karaokeLayer (name or alias in {{{<layer>}}}):
+{{{
+<p name="transform.position" link='effect("Point Control")(1)' comp="Karaoke" layer="karaokeLayer" />
+}}}
+set: (abbreviate to s)
+{{{
+<set name="enabled" value="0" />
+}}}
+  * name is the afx object name
+  * property is the property of that object
+  * value is the set value.
+
+
+--- OR: (For Layer properties)
+{{{
+<set name="effect('Layer Control')(1)" layer="karaoke" />
+}}}
+  * name: property name within that layer.
+  * layer: Layer template name that the property will set to.
+
+-- Use this to link layers.
+
+Basically, these XML configurations are similar to old functions, as they're used to call the old funs.
