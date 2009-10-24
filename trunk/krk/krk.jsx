@@ -1714,7 +1714,7 @@ function KRKLayer( layer , options )
 		{
 			if ( decnum ? s = Number(a[i]) : false )
 			{
-				a[i] ++ ;
+				a[i] -- ;
 			}
 			o[a[i]] = true ;
 		}
