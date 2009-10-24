@@ -3715,7 +3715,7 @@ KRKCommon.prototype.xml_bool = function( x , nonzero )
 		{
 			return undefined ;
 		}
-		if ( x.match( nonzero ? /^\s*(none|no|false|non|nothing|void)\s*/g : /^\s*(none|no|0+|false|non|nothing|void)\s*/g ) )
+		if ( x.match( nonzero ? /^\s*(none|no|false|non|nothing|void)\s*/gi : /^\s*(none|no|0+|false|non|nothing|void)\s*/gi ) )
 		{
 			return false ;
 		}
