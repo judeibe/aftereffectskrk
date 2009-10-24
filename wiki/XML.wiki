@@ -28,6 +28,7 @@ As a side note, you cannot undo any changes made in the comments once you swappe
   * name is the layer's name
   * space is the zero-space override.  Note, you cannot disable zero-space if the anchor point group is set to Word.
   * no is a little optimization in calculations, where the KRK Syllable won't be generated.  However, if you enable 'no', you won't be able to collect positional values.
+  * blend: blending mode.  Available modes (case-insensitive, space independent): add, alpha add, classic color burn, classic color dodge, classic difference, color, color burn, color dodge, dancing dissolve, darken, darker color, difference, dissolve, exclusion, hard light, hard mix, hue, lighten, lighter color, linear burn, linear dodge, linear light, luminescent premul, luminosity, multiply, normal, overlay, pin light, saturation, screen, silhouete alpha, silhouette luma, soft light, stencil alpha, stencil luma, vivid light
   * alias = alias name (instead of based on name + repeated index)
 
 ===line===
