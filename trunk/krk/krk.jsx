@@ -2506,7 +2506,7 @@ function KRKProperty( property , options )
 				, time : property.keyTime( k )
 				, interpolationType : [ property.keyInInterpolationType( k ) , property.keyOutInterpolationType( k ) ]
 //				, spatialTangents : [ property.keyInSpatialTangent( k ) , property.keyOutSpatialTangent( k ) ]
-				, temoralEase : [ property.keyInTemporalEase( k ) , property.keyOutTemporalEase( k ) ]
+				, temporalEase : [ property.keyInTemporalEase( k ) , property.keyOutTemporalEase( k ) ]
 				, temporalContinuous : property.keyTemporalContinuous( k )
 				, temporalAutoBezier : property.keyTemporalAutoBezier( k )
 //				, roving : property.keyRoving( k )
@@ -2669,6 +2669,7 @@ function KRKProperty( property , options )
 	{
 		var i , method , name ;
 		var index = null ;
+		var a, b, j, k,key ;
 		if ( names == undefined )
 		{
 			names =
@@ -2691,7 +2692,8 @@ function KRKProperty( property , options )
 		{
 			name = names[i] ;
 			method = "set" + name[0].toUpperCase( ) + name.substring( 1 ) + "AtKey" ;
-			a = newKey[name] == undefined ? this.keys[keyIndex-1][name] : newKey[name] ;
+			key=this.keys[keyIndex-1] ;
+			a = newKey[name] == undefined ? key[name] : newKey[name] ;
 			if ( a == undefined ) { continue ; }
 			if ( ( name != 'value' ) && ( a instanceof Array ) )
 			{
