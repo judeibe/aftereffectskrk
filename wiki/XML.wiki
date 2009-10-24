@@ -12,6 +12,7 @@ The old configuration is obsolete in this version, since it's a hackish way of i
 =XML Guideline=
 
 {{{
+<copy name="K" from="Comp 1" layer="karaoke" />
 <layer name="layerName" space="0" no="0">
 	<line name="styleName" layer="" syl="0" />
 	<animator name="animatorName" syl="1" unnorm="start|end" />
@@ -23,6 +24,13 @@ The old configuration is obsolete in this version, since it's a hackish way of i
 
 As a side note, you cannot undo any changes made in the comments once you swapped out of the comment mode. To prevent this from happening, please edit these XML configurations with an external editor, then paste the XML config back into the box.
 
+==copy==
+Basically it copies the layers from one composition to another composition.
+  * from: From composition in KRK Comp (default is the current composition)
+  * to: To composition in KRK Comp (default is the current composition)
+  * layer: Layer name in the 'from' composition
+  * name: rename the layer to another name. (default is the source layer's name)
+  * replace: true/false (default: TRUE) -- true to replace the existing layer.  False not to (so if it's not replaced, then the old layer won't get overwritten).
 
 ==layer==
   * name is the layer's name
