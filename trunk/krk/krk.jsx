@@ -1016,7 +1016,7 @@ function KRKLayer( layer , options )
 			}
 			else if ( layer )
 			{
-				xx.link = [ layer , link ] ;
+				xx.link = [ this.comp.comp.name , layer , link ] ;
 			}
 		}
 		this.p( x.@name.toString() , xx ) ;
