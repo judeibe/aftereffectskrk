@@ -60,7 +60,7 @@ Do the following:
      * end = 0 to 100% at the start ([) marker.
      * Range Selector->Advanced->Mode = Add
      * Check off EYE (Hide it)
-  * Use the following codes: (say, Karaoke your template layer name)
+  * Use the following codes: (say, Karaoke is your template layer name)
 {{{
 <layer name="Karaoke" alias="karaoke_on">
 	<a name="on" syl="yes" />
