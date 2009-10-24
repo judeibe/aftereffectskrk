@@ -73,6 +73,8 @@ function KRKProject( K )
 	this.unique = true ;
 	this.expression = null ;
 	this.project = app.project ;
+	this.folder = null ;
+	this.currentIndex = 0 ;
 	/**
 	 * A Constructor
 	 * @param K -- Karaoke JSON, Generated from an external script
@@ -106,6 +108,8 @@ function KRKProject( K )
 			undoText = this.undo ? this.undo : "KRK Project" ;
 		}
 		app.beginUndoGroup( undoText ) ;
+		this.removeAllComps( );
+		this.removeAllLayers( ) ;
 	}
 	
 	this.title = function( title )
@@ -189,6 +193,30 @@ function KRKProject( K )
 			}
 		}
 		return this ;
+	}
+	
+	this.removeAllComps = function( )
+	{
+		var items = app.project.items ;
+		var item ;
+		var i;
+		for ( i = items.length ; i > 0 ; i -- )
+		{
+			item = items[i] ;
+			if ( item.name.match( /^__KRK/ ) )
+			{
+				item.remove( );
+			}
+		}
+		this.folder = items.addFolder( '__KRK' ) ;
+	}
+	
+	
+	this.tempname = function( )
+	{
+		var name = "__KRK_" + this.currentIndex ; 
+		this.currentIndex ++ ;
+		return name ;
 	}
 
 	/**
@@ -679,7 +707,8 @@ function KRKComp( comp )
 					alias: this.xml_value( layer.@alias ) , 
 					no: this.xml_value( layer.@no ) , 
 					disabled: this.xml_bool(layer.@disabled) , 
-					blending: this.xml_value( layer.@blend )
+					blending: this.xml_value( layer.@blend ) ,
+					precomp: this.xml_bool( layer.@precomp )
 				} ) ; 
 			} catch( err ) { 
 				var description = 
@@ -785,6 +814,7 @@ function KRKLayer( layer , options )
 	this.second = null ;
 	this.blending = undefined ;
 	this.setprop = [ ] ;
+	this.precomp = false ;
 	
 	/**
 	 * A function to resynchronize the properties on this object
@@ -909,9 +939,7 @@ function KRKLayer( layer , options )
 		{
 			this.readPresetTimes( ) ;
 		}
-		if ( this.options.blending )
-		{
-		}
+
 		var blend ;
 		if ( blend = options.blending )
 		{
@@ -921,6 +949,10 @@ function KRKLayer( layer , options )
 				this.blending = blend;
 			}
  		}
+		if ( options.precomp )
+		{
+			this.precomp = true ;
+		}
 		this.disabled = this.options.disabled ;
 		this.addlayers = [ ] ;
 		this.layers = { } ;
@@ -1181,7 +1213,8 @@ function KRKLayer( layer , options )
 		var newLayer , k ;
 		this.old.selected = this.old.enabled = false ;
 		var tmp  ;
-		
+		var item , $name ;
+		var $project = this.getParent("project")  ;
 		// Check for default properties:
 		if ( this.old("Text") )
 		{
@@ -1246,6 +1279,7 @@ function KRKLayer( layer , options )
 			{
 				newLayer.selected = newLayer.enabled = ! this.disabled ;
 				layerName = this.parseLayerName( newLayer.name ) ;
+			// setting properties
 				for ( l in this.setprop )
 				{
 					if ( this.setprop[l].property == 'layer' )
@@ -1285,6 +1319,14 @@ function KRKLayer( layer , options )
 						try{
 						newLayer[this.setprop[l].name] = this.setprop[l].property ; } catch(err){ this.throw( { layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"  ("+this.setprop[l].property + ')'  } , err ) ; }
 					}
+				}
+			// precomposing
+				if ( this.precomp )
+				{
+					$name = newLayer.name ;
+					item = this.comp.comp.layers.precompose( [ newLayer.index ] , $project.tempname( )  , true ) ;
+					item.name = $name ;
+					item.parentFolder = $project.folder ;
 				}
 			}
 		}
@@ -3775,6 +3817,8 @@ KRKCommon.prototype.throw = function( new_err , old_err )
 	throw new_err ;
 }
 
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -3811,8 +3855,7 @@ try{ !krk } catch( err ){ krk = null ; }
 			if ( krkx = karaoke.@codes( ) )
 			{
 				karaoke.begin( ) ;
-				karaoke.removeAllLayers( ) ;
-				if ( confirm( 'It seems to be good to go!!\nThe generated layers also have been purged.\n\nDo you want to commit your settings and generate the layers?\n\nNote: It may take a few minutes to generate depending upon how many layers and properties required to be generated.' ) )
+				if ( confirm( 'It seems to be good to go!!\nThe generated comps and layers also have been purged.\n\nDo you want to commit your settings and generate the layers?\n\nNote: It may take a few minutes to generate depending upon how many layers and properties required to be generated.' ) )
 				{
 					try{ karaoke.commit( ) ; } catch(err){ alert( (err.comp ? "Comp: " + err.comp : "" ) + (err.layer ? "Layer: " + err.layer: "" )+ "\nCode: " + err.number + "\nMessage:\n" + err.description ); }
 					//karaoke.commit( ) ;			
