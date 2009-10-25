@@ -121,4 +121,16 @@ For example, to link transform.position (make sure you have keyframes here or el
 
 -- Use this to link layers.
 
+===dim===
+(aliases: dimension)
+  * pos is the position property (ideally for 2D Point Control)
+  * size is the size property (ideally for 2D Point contorl)
+  * dur is the duration.
+    * If you don't specify dur, it will use the in-point and no keyframes.
+    * If you specify dur > 0, it will mean the delta-t between each keyframe is dur, and that it will start at the in-point and ends at the out-point... It might be slow.
+    * If you specify dur="syl" or anything, it will only generate the keyframes based on the syllable timings associated to the generated layer.
+
+Note: use scale in text animator to obtain syllable sizes.  This is a helper for the expression using sourceRectAtTime to obtain the size and the position of the layer, which is lacked in expression.  It may be slow, so you need to optimize it a bit.
+
+
 Basically, these XML configurations are similar to old functions, as they're used to call the old funs.
