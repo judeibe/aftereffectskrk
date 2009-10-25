@@ -55,7 +55,7 @@ if ( F.exists )
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-function() {
+( function() {
 
 /** KRKProject( K ) -- Main Karaoke Project Prototype: LEVEL 1
  * @param K -- Karaoke JSON, Generated from an external script
@@ -740,9 +740,19 @@ function KRKComp( comp )
 			if ( fixed ) 
 			{
 				fixed = fixed.toLowerCase( );
-				if ( fixed != 'start' && fixed != 'end' )
+				switch (fixed)
 				{
-					fixed = this.xml_bool( layer.@fixed ) ;
+					case 'start':
+						fixed = '^' ;
+						break;
+					case 'end':
+						fixed = '$' ;
+						break;
+					case '^':
+					case '$':
+						break;
+					default:
+						fixed = this.xml_bool( layer.@fixed ) ;
 				}
 			}
 			threed = this.xml_bool( layer.@threed)
@@ -975,7 +985,7 @@ function KRKLayer( layer , options )
 		if ( this.options.disabled )
 		{
 			this.disabled = true ;
-			this.readPresetTimes( ) ;
+			this.readPresetTimes( options.fixed ) ;
 		}
 		if ( this.options.time )
 		{
@@ -983,7 +993,7 @@ function KRKLayer( layer , options )
 		}
 		else
 		{
-			this.readPresetTimes( ) ;
+			this.readPresetTimes( options.fixed ) ;
 		}
 
 		var blend ;
@@ -2000,8 +2010,13 @@ function KRKLayer( layer , options )
 		var marker , makers , time , chap , comment ;
 		var startTime = this.layer.startTime ;
 		var stretch = parseFloat( this.layer.stretch ) / 100 ;
-		if ( layer == undefined )
+		var fixed = null ;
+		if ( !( layer instanceof Object ) )
 		{
+			if ( typeof layer != 'undefined' )
+			{
+				fixed = layer ;
+			}
 			layer = this.layer ;
 		}
 		else if ( ! ( layer instanceof Object ) )
@@ -2030,6 +2045,10 @@ function KRKLayer( layer , options )
 				comment = String(markers[i].comment) ;
 				this.setTimeline( comment , ( parseFloat( markers[i].time ) - startTime ) * stretch , o ) ;
 			}
+		}
+		if ( typeof fixed != 'undefined' )
+		{
+			o.fixed = fixed ;
 		}
 		this.time = o ;
 		return this ;
@@ -4180,7 +4199,7 @@ try{ !krk } catch( err ){ krk = null ; }
 			KRKCommon.error_alert( e ) ;
 		}
 	}
-} } ();
+} } ) ();
 
 
 
