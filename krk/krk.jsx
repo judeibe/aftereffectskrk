@@ -3491,7 +3491,7 @@ function KRKCommon( )
 		{
 			return t + o.endTime - that.endTime ;
 		}
-		fixed = typeof o.fixed != 'boolean' ? parseInt( o.fixed == 'start' ? 0 : ( o.fixed == 'end' ? 100 : o.fixed ) ) : undefined ;
+		fixed = typeof o.fixed != 'boolean' ? parseInt( o.fixed == 'start' ? 0 : ( o.fixed == 'end' ? 100 : o.fixed ) ) : ( fixed ? 0 : undefined ) ;
 		if ( fixed >= 0 && fixed <= 100 )
 		{
 			return t + o.startTime - that.startTime + ( o.endTime - o.startTime ) * fixed * 0.01 ;
@@ -3559,7 +3559,7 @@ function KRKCommon( )
 		{
 			return t + o.endTime - that.endTime ;
 		}
-		fixed = typeof o.fixed != 'boolean' ? parseFloat( o.fixed == 'start' ? 0 : ( o.fixed == 'end' ? 100 : o.fixed ) ) : undefined ;
+		fixed = typeof o.fixed != 'boolean' ? parseInt( o.fixed == 'start' ? 0 : ( o.fixed == 'end' ? 100 : o.fixed ) ) : ( fixed ? 0 : undefined ) ;
 		if ( fixed >= 0 && fixed <= 100 )
 		{
 			return t + o.startTime - that.startTime + ( o.endTime - o.startTime ) * fixed * 0.01 ;
