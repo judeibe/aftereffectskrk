@@ -55,6 +55,8 @@ if ( F.exists )
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+function() {
+
 /** KRKProject( K ) -- Main Karaoke Project Prototype: LEVEL 1
  * @param K -- Karaoke JSON, Generated from an external script
  */
@@ -1742,15 +1744,9 @@ function KRKLayer( layer , options )
 				name = this.layerNaming( this.name , style instanceof Object ? style[0] : style , layerNumber , lineNumber , syllableNumber ) ;
 				k = K[ style instanceof Object ? style[0] : style ][layerNumber][lineNumber][syllableNumber] ;
 				o = { startTime: k.time , endTime: k.time + k.dur } ;
-				if ( fixed )
-				{
-					o.fixed = 'start' ;
-				}
+				o.fixed = fixed === true || fixed === '^' ? '^' : false ;
 				startTime = this.originalTimeFunction( this.time.inTime == undefined ? this.old.inPoint : this.time.inTime , 0 , o ) ;
-				if ( fixed )
-				{
-					o.fixed = 'end' ;
-				}
+				o.fixed = fixed === true || fixed === '$' ? '$' : false ;
 				endTime = this.originalTimeFunction( this.time.outTime == undefined  ? this.old.outPoint : this.time.outTime , 0 , o ) ;
 				kara = [  style instanceof Object ? style[0] : style  , layerNumber , lineNumber , syllableNumber ] ;
 			}
@@ -1759,23 +1755,9 @@ function KRKLayer( layer , options )
 				name = this.layerNaming( this.name ,  style instanceof Object ? style[0] : style  , layerNumber , lineNumber , sylNum ? -Number( syllableNumber ) : undefined ) ;
 				k = K[ style instanceof Object ? style[0] : style ][layerNumber][lineNumber] ;
 				o = { startTime: k.start , endTime: k.end } ;
-				if ( fixed === true || fixed === 'start' )
-				{
-					o.fixed = '__start' ;
-				}
-				else
-				{
-					o.fixed = undefined ;
-				}
+				o.fixed = fixed === true || fixed === '^' ? '^' : false ;
 				startTime = this.originalTimeFunction( this.time.inTime == undefined ? this.old.inPoint : this.time.inTime , 0 , o ) ;
-				if ( fixed === true || fixed === 'end' )
-				{
-					o.fixed = '__end' ;
-				}
-				else
-				{
-					o.fixed = undefined ;
-				}
+				o.fixed = fixed === true || fixed === '$' ? '$' : false ;
 				endTime = this.originalTimeFunction( this.time.outTime == undefined  ? this.old.outPoint : this.time.outTime , 0 , o ) ;
 				kara = [  style instanceof Object ? style[0] : style  , layerNumber , lineNumber ] ;				
 			}
@@ -2066,7 +2048,7 @@ function KRKLayer( layer , options )
 		{
 		// fixed timing
 			case '{':
-				o.fixed = typeof o.fixed == 'undefined' ? 'start' : true ;
+				o.fixed = typeof o.fixed == 'undefined' ? '^' : true ;
 		// variable timing
 			case '[':
 				o.startTime = time ;
@@ -2074,7 +2056,7 @@ function KRKLayer( layer , options )
 			break;
 
 			case '}':
-				o.fixed = typeof o.fixed == 'undefined' ? 'end' : true ;
+				o.fixed = typeof o.fixed == 'undefined' ? '$' : true ;
 
 			case ']':
 				o.endTime = time ;
@@ -3482,15 +3464,15 @@ function KRKCommon( )
 		{
 			o.fixed = that.fixed ;
 		}
-		if ( o.fixed == '__start' )
+		if ( o.fixed == '^' )
 		{
 			return t + o.startTime - that.startTime ;
 		}
-		if ( o.fixed == '__end' )
+		if ( o.fixed == '$' )
 		{
 			return t + o.endTime - that.endTime ;
 		}
-		fixed = parseInt( o.fixed == 'start' ? 0 : ( o.fixed == 'end' ? 100 : o.fixed ) ) ;
+		fixed = typeof o.fixed != 'boolean' ? parseInt( o.fixed == 'start' ? 0 : ( o.fixed == 'end' ? 100 : o.fixed ) ) : undefined ;
 		if ( fixed >= 0 && fixed <= 100 )
 		{
 			return t + o.startTime - that.startTime + ( o.endTime - o.startTime ) * fixed * 0.01 ;
@@ -3550,11 +3532,15 @@ function KRKCommon( )
 		{
 			o.fixed = that.fixed ;
 		}
-		if ( o.fixed == '__end' )
+		if ( o.fixed == '^' )
+		{
+			return t + o.startTime - that.startTime ;
+		}
+		if ( o.fixed == '$' )
 		{
 			return t + o.endTime - that.endTime ;
 		}
-		fixed = parseFloat( o.fixed == 'start' ? 0 : ( o.fixed == 'end' ? 100 : o.fixed ) ) ;
+		fixed = typeof o.fixed != 'boolean' ? parseFloat( o.fixed == 'start' ? 0 : ( o.fixed == 'end' ? 100 : o.fixed ) ) : undefined ;
 		if ( fixed >= 0 && fixed <= 100 )
 		{
 			return t + o.startTime - that.startTime + ( o.endTime - o.startTime ) * fixed * 0.01 ;
@@ -4194,7 +4180,7 @@ try{ !krk } catch( err ){ krk = null ; }
 			KRKCommon.error_alert( e ) ;
 		}
 	}
-}
+} } ();
 
 
 
