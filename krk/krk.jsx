@@ -4153,7 +4153,7 @@ KRKCommon.prototype.KRK_LINE = 3 ;
 
 KRKCommon.prototype.getFixed = function( value )
 	{
-		var fixed = this.xml_bool( value );
+		var fixed = this.xml_bool( value , true );
 		var fixed2 = this.xml_value( value ) ;
 		if ( fixed && fixed2 )
 		{
