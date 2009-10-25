@@ -735,7 +735,17 @@ function KRKComp( comp )
 	{
 		var disabled = this.xml_bool( layer.@disabled) ? 1 : undefined  ;
 		var threed , krklayer , children , f , j , i ;
+		var fixed ;
 		try { 
+			fixed = this.xml_value( layer.@fixed ) ;
+			if ( fixed ) 
+			{
+				fixed = fixed.toLowerCase( );
+				if ( fixed != 'start' && fixed != 'end' )
+				{
+					fixed = this.xml_bool( layer.@fixed ) ;
+				}
+			}
 			threed = this.xml_bool( layer.@threed)
 			if ( typeof threed == 'undefined' ) { threed = this.xml_bool( layer.@threeD ) ; } 
 			krklayer = this.add( this.xml_value( layer.@name  ) , 
@@ -746,7 +756,8 @@ function KRKComp( comp )
 				disabled: this.xml_bool(layer.@disabled) , 
 				blending: this.xml_value( layer.@blend ) ,
 				precomp: this.xml_bool( layer.@precomp ) ,
-				threed: typeof threed == 'undefined' ? undefined : threed
+				threed: typeof threed == 'undefined' ? undefined : threed ,
+				fixed: fixed
 			} ) ; 
 		} catch( err ) { 
 			var description = 
@@ -1040,7 +1051,7 @@ function KRKLayer( layer , options )
 	
 	this.@p = this.@prop = this.@property = function( x )
 	{
-		var xx = { syl: this.xml_bool( x.@syl ) ? true : undefined , unnorm: this.xml_value( x.@unnorm ) , pos: this.xml_value( x.@pos ) } ;
+		var xx = { syl: this.xml_bool( x.@syl ) ? true : undefined , fixed: this.xml_value( x.@fixed ) , pos: this.xml_value( x.@pos ) } ;
 		var comp = this.xml_value( x.@comp ) ;
 		var layer = this.xml_value( x.@layer ) ;
 		var link = this.xml_value( x.@link ) ;
@@ -1066,7 +1077,7 @@ function KRKLayer( layer , options )
 
 	this.@a = this.@anim = this.@animate = this.@animator = function( x )
 	{
-		this.a( x.@name.toString() , { syl: this.xml_bool( x.@syl ) ? true : undefined, unnorm: this.xml_value( x.@unnorm ) } ) ;
+		this.a( x.@name.toString() , { syl: this.xml_bool( x.@syl ) ? true : undefined, fixed: this.xml_value( x.@fixed ) } ) ;
 	}
 
 	/**
@@ -1553,13 +1564,17 @@ function KRKLayer( layer , options )
 	 * @param lineNumber -- Line number in Karaoke JSON
 	 * @param syllableNumber -- Syllable number in Karaoke JSON (default is off--generate the whole line or else--generate one line)
 	 */
-	this.create = function( spacing , style , layerNumber , lineNumber , syllableNumber , unnorm )
+	this.create = function( spacing , style , layerNumber , lineNumber , syllableNumber , fixed )
 	{
 		var K = this.getKaraObject( ) ;
 		var k ;
 		var name , kara , o ;
 		var startTime , endTime ;
-		var text = style instanceof Object ? [ K[style[0]][layerNumber][lineNumber] , K[style[1]][layerNumber][lineNumber] ] : K[style][layerNumber][lineNumber]
+		var text = style instanceof Object ? [ K[style[0]][layerNumber][lineNumber] , K[style[1]][layerNumber][lineNumber] ] : K[style][layerNumber][lineNumber] ;
+		if ( typeof fixed == 'undefined' )
+		{
+			fixed = this.time.fixed ;
+		}
 		if ( style != undefined && lineNumber != undefined )
 		{
 			var sylNum = syllableNumber && Number( syllableNumber ) < 0 ;
@@ -1568,14 +1583,14 @@ function KRKLayer( layer , options )
 				name = this.layerNaming( this.name , style instanceof Object ? style[0] : style , layerNumber , lineNumber , syllableNumber ) ;
 				k = K[ style instanceof Object ? style[0] : style ][layerNumber][lineNumber][syllableNumber] ;
 				o = { startTime: k.time , endTime: k.time + k.dur } ;
-				if ( unnorm )
+				if ( fixed )
 				{
-					o.unnorm = 'start' ;
+					o.fixed = 'start' ;
 				}
 				startTime = this.originalTimeFunction( this.time.inTime == undefined ? this.old.inPoint : this.time.inTime , 0 , o ) ;
-				if ( unnorm )
+				if ( fixed )
 				{
-					o.unnorm = 'end' ;
+					o.fixed = 'end' ;
 				}
 				endTime = this.originalTimeFunction( this.time.outTime == undefined  ? this.old.outPoint : this.time.outTime , 0 , o ) ;
 				kara = [  style instanceof Object ? style[0] : style  , layerNumber , lineNumber , syllableNumber ] ;
@@ -1585,14 +1600,22 @@ function KRKLayer( layer , options )
 				name = this.layerNaming( this.name ,  style instanceof Object ? style[0] : style  , layerNumber , lineNumber , sylNum ? -Number( syllableNumber ) : undefined ) ;
 				k = K[ style instanceof Object ? style[0] : style ][layerNumber][lineNumber] ;
 				o = { startTime: k.start , endTime: k.end } ;
-				if ( unnorm )
+				if ( fixed === true || fixed === 'start' )
 				{
-					o.unnorm = 'start' ;
+					o.fixed = '__start' ;
+				}
+				else
+				{
+					o.fixed = undefined ;
 				}
 				startTime = this.originalTimeFunction( this.time.inTime == undefined ? this.old.inPoint : this.time.inTime , 0 , o ) ;
-				if ( unnorm )
+				if ( fixed === true || fixed === 'end' )
 				{
-					o.unnorm = 'end' ;
+					o.fixed = '__end' ;
+				}
+				else
+				{
+					o.fixed = undefined ;
 				}
 				endTime = this.originalTimeFunction( this.time.outTime == undefined  ? this.old.outPoint : this.time.outTime , 0 , o ) ;
 				kara = [  style instanceof Object ? style[0] : style  , layerNumber , lineNumber ] ;				
@@ -1645,7 +1668,7 @@ function KRKLayer( layer , options )
 	 *                   spacing can be the expression control name or a number.
 	 * @param anim -- list of animators that can be applied there through commit function
 	 * @param prop -- list of properties that can be applied there through commit function
-	 * @param unnorm -- tells the script to add unnormalized lead-in and lead-out to the line/syllable.
+	 * @param fixed -- tells the script to add fixedalized lead-in and lead-out to the line/syllable.
 	 * @note All the generated layers are stored in layers[].layers[]
 	 */
 	this.addl = function( keys , options )
@@ -1660,7 +1683,7 @@ function KRKLayer( layer , options )
 			k = keys[i] ;
 			if ( k.length == level )
 			{
-				this.layer = this.create( options.spacing == undefined ? null : options.spacing , options[2] ? [ k[0] , options[2] ] : k[0] , k[1] , k[2] , options.syl ? ( options.syl == "all" ? -k[3] : k[3] ) : undefined , options.unnorm ) ;
+				this.layer = this.create( options.spacing == undefined ? null : options.spacing , options[2] ? [ k[0] , options[2] ] : k[0] , k[1] , k[2] , options.syl ? ( options.syl == "all" ? -k[3] : k[3] ) : undefined , options.fixed ) ;
 				if ( options[2] )
 				{
 					this.layers2[this.layer.name] = options[2] ;
@@ -1755,7 +1778,7 @@ function KRKLayer( layer , options )
 		var z = { };
 		var y ;
 		var m , i ;
-		var o = { unnorm: this.xml_value( x.@unnorm ) } ;
+		var o = { } ;
 		var blend = null ;
 		if ( typeof ( y = this.xml_value( x.@style ) ) != 'undefined' ? true :  typeof ( y = this.xml_value( x.@name ) ) != 'undefined' )
 		{
@@ -1792,17 +1815,17 @@ function KRKLayer( layer , options )
 	  * @function addKara: Adds a karaoke (Text animator) to this object
 	  * @note None of the karaoke has been generated until you tell it to
 	  * @param animator -- An After-Effects Text animator object or name
-	  * @param unnorm (time unnormalized factor)
+	  * @param fixed (time fixedalized factor)
 	  * @see KRKAnimator
 	  * @DEPRECATED -- use adda( )
 	  */
-	this.addKara = function( animator , unnorm )
+	this.addKara = function( animator , fixed )
 	{
 		var a ;
 		var o = animator instanceof Array ? animator : [animator] ;
 		for ( a in o )
 		{
-			this.animators[o[a]] = new KRKAnimator( o[a] , unnorm ) ;
+			this.animators[o[a]] = new KRKAnimator( o[a] , fixed ) ;
 			this.animators[o[a]].layer = this ;
 		}
 	}
@@ -1834,7 +1857,7 @@ function KRKLayer( layer , options )
 		}
 	
 		// Setting Defaults
-		o.unnorm = null ;
+		o.fixed = undefined ;
 		o.startTime = o.inTime = layer.inPoint ;
 		o.endTime = o.outTime = layer.outPoint ;
 	
@@ -1843,7 +1866,7 @@ function KRKLayer( layer , options )
 			for ( i = 1 ; i <= markers.numKeys ; i ++ )
 			{
 				marker = markers.keyValue( i ) ;
-				comment = marker.comment.toLowerCase() + " " + marker.chapter.toLowerCase() ;
+				comment = marker.comment;
 				this.setTimeline( comment , markers.keyTime(i) , o , i ) ;
 			}
 		}
@@ -1851,7 +1874,7 @@ function KRKLayer( layer , options )
 		{
 			for ( i = 0 ; i < markers.length ; i ++ )
 			{
-				comment = String(markers[i].comment).toLowerCase() ;
+				comment = String(markers[i].comment) ;
 				this.setTimeline( comment , ( parseFloat( markers[i].time ) - startTime ) * stretch , o ) ;
 			}
 		}
@@ -1868,35 +1891,36 @@ function KRKLayer( layer , options )
 	{
 		var a;
 		time = parseFloat(time);
-		if ( comment.match( /start|\[/i ) )
+		switch ( comment )
 		{
-			o.startTime = time ;
-			if ( a = comment.match( /unnorm(=(\w+))?/i ) )
-			{
-				o.unnorm = a[2] ? a[2] : 'start' ;
-			}
-			o.startMarker = i ;
-		}
-		if ( comment.match( /end|\]/i ) )
-		{
-			o.endTime = time ;
-			if ( a = comment.match( /unnorm(=(\w+))?/i ) )
-			{
-				o.unnorm = a[2] ? a[2] : 'end';
-			}
-			o.endMarker = i ;
-		}
-		if ( comment.match( /in|\</i ) )
-		{
-			o.inTime = time ;
-			o.inUnnorm = comment.match( /unnorm(=(\w+))?/i ) ? true : false ;
-			o.inMarker = i ;
-		}
-		if ( comment.match( /out|\>/i ) )
-		{
-			o.outTime =time ;
-			o.outUnnorm = comment.match( /unnorm/i ) ? true : false ;
-			o.outMarker = i ;
+		// fixed timing
+			case '{':
+				o.fixed = typeof o.fixed == 'undefined' ? 'start' : true ;
+		// variable timing
+			case '[':
+				o.startTime = time ;
+				o.startMarker = i ;
+			break;
+
+			case '}':
+				o.fixed = typeof o.fixed == 'undefined' ? 'end' : true ;
+
+			case ']':
+				o.endTime = time ;
+				o.endMarker = i ;
+			break;
+			
+			case '<':
+				o.inTime = time ;
+				o.infixed = comment.match( /fixed(=(\w+))?/i ) ? true : false ;
+				o.inMarker = i ;
+			break;
+			
+			case '>':
+				o.outTime =time ;
+				o.outfixed = comment.match( /fixed/i ) ? true : false ;
+				o.outMarker = i ;
+			break;
 		}
 		return o;
 	}
@@ -1995,7 +2019,7 @@ function KRKAnimator( animator , options )
 	/**
 	 * constructor function
 	 * @param animator -- After-Effects Text-Animator object (can be numeric (index), string, or After-Effects Text-Animator object)
-	 * @param unnorm -- Unnormalized timing indication (true or false) [default is false]
+	 * @param fixed -- fixedalized timing indication (true or false) [default is false]
 	 */
 	this.constructor = function( animator , options )
 	{
@@ -2069,7 +2093,7 @@ function KRKAnimator( animator , options )
 	/**
 	 * ref -- reference the selector
 	 * @param name -- name of the selector.  Can be an After-Effects range selector object or range selector object name
-	 * @param unnorm -- denote unnormalizations (default is off)
+	 * @param fixed -- denote fixedalizations (default is off)
 	 */
 	this.ref = function( name , options )
 	{
@@ -2083,18 +2107,18 @@ function KRKAnimator( animator , options )
 			}
 		}
 		this.syl = false ;
-		this.unnorm = null ;
+		this.fixed = undefined ;
 		if ( options )
 		{
 			if ( options instanceof Object )
 			{
-				this.unnorm = options.unnorm ;
+				this.fixed = options.fixed ;
 				this.syl = options.syl;
 			}
 			else
 			{
 				this.syl = options ;
-				this.unnorm = null ;
+				this.fixed = undefined ;
 			}
 		}
 		return this ;
@@ -2133,11 +2157,11 @@ function KRKAnimator( animator , options )
 	
 	/**
 	 * create -- create the text animators for the layers.  Syllable-based or whole line
-	 * @param unnorm -- denote unnormalizations (default is off)
+	 * @param fixed -- denote fixedalizations (default is off)
 	 * @return
 	 */
  
-	this.create = function( unnorm , syllables , style2 )
+	this.create = function( fixed , syllables , style2 )
 	{
 		var K = this.getKaraObject( ) ;
 		var ks , kline , i ;
@@ -2145,7 +2169,7 @@ function KRKAnimator( animator , options )
 		var kline = K[names.style][names.layer][names.line];
 		var kline2 ;
 		if ( style2 ) { kline2 = K[style2][names.layer][names.line]; }
-		unnorm = unnorm ? unnorm : this.unnorm ;
+		fixed = fixed ? fixed : this.fixed ;
 		this.start.clearAllKeys( ) ;
 		this.end.clearAllKeys( ) ;
 		this.offset.clearAllKeys( ) ;
@@ -2164,7 +2188,7 @@ function KRKAnimator( animator , options )
 				syllables[syl[i]] = true ;
 			}
 		}
-		var o = unnorm ? { unnorm: unnorm } : { } ;
+		var o = fixed ? { fixed: fixed } : { } ;
 		try{ this.old.sel.enabled = true ; } catch(e){ }
 		var start = 0 ;
 		this.sel = this.getSelector( ) ;
@@ -2399,7 +2423,7 @@ function KRKAnimator( animator , options )
 			this[prop].layer = this.layer ;
 		}
 		var o = this.parseLayerName( this.layer.layer.name ) ;
-		this.create( o.unnorm , this.syl == undefined || this.syl == false || this.syl == null ? o.syl : this.syl , this.layer.layers2[this.layer.layer.name] ) ;
+		this.create( o.fixed , this.syl == undefined || this.syl == false || this.syl == null ? o.syl : this.syl , this.layer.layers2[this.layer.layer.name] ) ;
 		return this ;
 	}
 
@@ -2426,16 +2450,16 @@ function KRKProperty( property , options )
 	this.layers = {} ;
 	this.old = null ;
 	this.unique = true ;
-	this.unnorm = false ;
+	this.fixed = false ;
 	this.position ;
 	this.link = null ;
 	this.options = { };
-	this.optionKeys = [ 'syl' , 'pos' , 'unnorm' ] ;
+	this.optionKeys = [ 'syl' , 'pos' , 'fixed' ] ;
 	
 	/**
 	 * constructor function
 	 * @param comp -- After-Effects Property object (can be numeric (index), string, or After-Effects Property object)
-	 * @param options = syllable, if options is an object: syl: syllable, unnorm: unnormalizations
+	 * @param options = syllable, if options is an object: syl: syllable, fixed: fixedalizations
 	 */
 	this.constructor = function( property , options )
 	{
@@ -2454,13 +2478,13 @@ function KRKProperty( property , options )
 			}
 		}
 		this.is_syl = false ;
-		this.unnorm = null ;
+		this.fixed = undefined ;
 		this.options = { } ;
 		if ( options )
 		{
 			if ( options instanceof Object )
 			{
-				this.unnorm = options.unnorm ;
+				this.fixed = options.fixed ;
 				this.is_syl = options.syl;
 				this.position = options.pos ;
 				this.link  = options.link ;
@@ -3280,22 +3304,31 @@ function KRKCommon( )
 	this.originalTimeFunction = function( t , value , o )
 	{
 		var that = o['time'] ? o['time'] : this.time ;
-		if ( o.unnorm == undefined )
+		
+		var fixed = undefined ;
+		var startTime , endTime ;
+		if ( typeof o.fixed == 'undefined' )
 		{
-			o.unnorm = that.unnorm ;
+			o.fixed = that.fixed ;
 		}
-		switch ( o.unnorm )
+		if ( o.fixed == '__start' )
 		{
-			case "start":
-				return t - that.startTime + o.startTime ;
-				break;
-			case "end":
-				return t - that.endTime + o.endTime ;
-				break;
-			default:
-				t = ( t - that.startTime ) / ( that.endTime - that.startTime ) ;
-				return t * ( o.endTime - o.startTime ) + o.startTime ;
+			return t + o.startTime - that.startTime ;
 		}
+		if ( o.fixed == '__end' )
+		{
+			return t + o.endTime - that.endTime ;
+		}
+		fixed = parseInt( o.fixed == 'start' ? 0 : ( o.fixed == 'end' ? 100 : o.fixed ) ) ;
+		if ( fixed >= 0 && fixed <= 100 )
+		{
+			return t + o.startTime - that.startTime + ( o.endTime - o.startTime ) * fixed * 0.01 ;
+		}
+		else
+		{
+			t = ( t - that.startTime ) / ( that.endTime - that.startTime ) ;
+			return t * ( o.endTime - o.startTime ) + o.startTime ;
+		}		
 	}
 	
 	/**
@@ -3315,7 +3348,7 @@ function KRKCommon( )
 			{
 				start = o.start == undefined ? 0 : ( o.start instanceof Array ? o.start[i] : o.start ) ;
 				end = o.end == undefined ? 1 : ( o.end instanceof Array ? o.end[i] : o.end ) ;
-				opt.push( o.unnormValue ? mul * value[i] : ( value[i] * mul * ( end - start ) + start ) );
+				opt.push( o.fixedValue ? mul * value[i] : ( value[i] * mul * ( end - start ) + start ) );
 			}
 			return opt ;
 		}
@@ -3323,7 +3356,7 @@ function KRKCommon( )
 		{
 				start = o.start == undefined ? 0 : ( o.start instanceof Array ? o.start[0] : o.start ) ;
 				end = o.end == undefined ? 1 : ( o.end instanceof Array ? o.end[0] : o.end ) ;
-				opt.push( o.unnormValue ? mul * value[0] : ( value[0] * mul * ( end - start ) + start ) );
+				opt.push( o.fixedValue ? mul * value[0] : ( value[0] * mul * ( end - start ) + start ) );
 		}
 	}
 
@@ -3334,27 +3367,31 @@ function KRKCommon( )
 	 * @param value -- value [place holder]
 	 * @param o -- an object of this format -- start: starting value, end: ending value,
 	 *                                         startTime: starting time, endTime: ending time,
-	 *                                         unnorm: "start" unnorm from the start time, "end": unnorm from the end time, default is normalized
+	 *                                         fixed: "start" fixed from the start time, "end": fixed from the end time, default is normalized
 	 * @return adjusted time
 	 */
 	this.defaultTimeFunction = function( t , value , o )
 	{
-		var that = o['time'] ? o['time'] : this.time 
-		if ( o.unnorm == undefined )
+		var that = o['time'] ? o['time'] : this.time ;
+		var fixed = undefined ;
+		var startTime , endTime ;
+		if ( typeof o.fixed == 'undefined' )
 		{
-			o.unnorm = that.unnorm ;
+			o.fixed = that.fixed ;
 		}
-		switch ( o.unnorm )
+		if ( o.fixed == '__end' )
 		{
-			case "start":
-				return t + o.startTime - that.startTime ;
-				break;
-			case "end":
-				return t + o.endTime - that.endTime ;
-				break;
-			default:
-				t = ( t - that.startTime ) / ( that.endTime - that.startTime ) ;
-				return t * ( o.endTime - o.startTime ) + o.startTime ;
+			return t + o.endTime - that.endTime ;
+		}
+		fixed = parseFloat( o.fixed == 'start' ? 0 : ( o.fixed == 'end' ? 100 : o.fixed ) ) ;
+		if ( fixed >= 0 && fixed <= 100 )
+		{
+			return t + o.startTime - that.startTime + ( o.endTime - o.startTime ) * fixed * 0.01 ;
+		}
+		else
+		{
+			t = ( t - that.startTime ) / ( that.endTime - that.startTime ) ;
+			return t * ( o.endTime - o.startTime ) + o.startTime ;
 		}
 	}
 
@@ -3364,7 +3401,7 @@ function KRKCommon( )
 	 * @param value -- value [place holder]
 	 * @param o -- an object of this format -- start: starting value, end: ending value,
 	 *                                         startTime: starting time, endTime: ending time,
-	 *                                         unnorm: "start" unnorm from the start time, "end": unnorm from the end time, default is normalized
+	 *                                         fixed: "start" fixed from the start time, "end": fixed from the end time, default is normalized
 	 * @return adjusted value
 	 */
 	this.defaultValueFunction = function( t , value , o )
@@ -3378,7 +3415,7 @@ function KRKCommon( )
 			{
 				start = o.start == undefined ? 0 : ( o.start instanceof Array ? o.start[i] : o.start ) ;
 				end = o.end == undefined ? 1 : ( o.end instanceof Array ? o.end[i] : o.end ) ;
-				opt.push( o.unnormValue ? mul * value[i] : ( value[i] * ( end - start ) * mul + start ) );
+				opt.push( o.fixedValue ? mul * value[i] : ( value[i] * ( end - start ) * mul + start ) );
 			}
 			return opt ;
 		}
@@ -3386,7 +3423,7 @@ function KRKCommon( )
 		{
 			var start = o.start == undefined ? 0 : ( o.start instanceof Array ? o.start[0] : o.start ) ;
 			var end = o.end == undefined ? 1 : ( o.end instanceof Array ? o.end[0] : o.end ) ;
-			return o.unnormValue ? mul * value : ( value * ( end - start ) * mul + start ) ;
+			return o.fixedValue ? mul * value : ( value * ( end - start ) * mul + start ) ;
 		}
 	}
 
