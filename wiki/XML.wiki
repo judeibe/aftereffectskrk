@@ -15,8 +15,8 @@ The old configuration is obsolete in this version, since it's a hackish way of i
 <copy name="K" from="Comp 1" layer="karaoke" />
 <layer name="layerName" space="0" no="0">
 	<line name="styleName" layer="" syl="0" />
-	<animator name="animatorName" syl="1" unnorm="start|end" />
-	<property name="property.name" syl="1" pos="0" unnorm="1" />
+	<animator name="animatorName" syl="1" fixed="start|end" />
+	<property name="property.name" syl="1" pos="0" fixed="1" />
 	<set name="layerProperty" property="property" value="0" />
 </layer>
 }}}
@@ -52,7 +52,7 @@ Enclosing the following tags.
   * layer is the layer number in .ass (by default, it selects all layers)
   * line is the line number
   * syl indicates if you want to generate per-syllable. To select certain syllables, put in numbers.  Note syl="0" means syllable #0 in per-syllable mode.
-  * unnorm determines if the current line has unnormalized lead-in/lead-out.
+  * fixed determines if the current line has fixedalized lead-in/lead-out.
 
 Note: you can add more than one {{{<line />}}} if you need more lines.  however, because this script does not check if the lines have been generated on the same layer, make sure you don't have any of the same lines repeated.
 
@@ -75,7 +75,7 @@ You get the idea... This will generate all lines in line mode (non-syllables).  
 (aliases: animator anim a)
   * name is the text animator's name
   * syl is if it's a syllable timing (if syl=0, then it's a line timing)
-  * unnorm is if it's unnormalized
+  * fixed is if it's fixedalized
 
 {{{
 <a name="MyAnimator" syl="syl" />
@@ -85,7 +85,7 @@ You get the idea... This will generate all lines in line mode (non-syllables).  
 (aliases: prop p)
   * name is the afx eval name for the properties (copy and paste from expressions)
   * syl is if it's a syllable timing (if syl=0, then it's a line timing)
-  * unnorm is if it's unnormalized
+  * fixed is if it's fixedalized
   * pos is to generate positional keys
   * link -- link to another property (it requires either layer OR comp and layer) (if you need the property from the same layer, just make your own expression within the same layer)
   * comp -- comp link
