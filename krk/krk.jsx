@@ -610,14 +610,14 @@ function KRKComp( comp )
 		var startTime = this.comp.startTime ;
 		var i , marker , markers , text ;
 // The only way to get composition markers is to use expressions.
-		textLayer.Text.sourceText.expression = "var m=thisComp.marker;var x='';for(var i=1;i<=m.numKeys;i++){x+=(x==''?'':'!!KRK!!')+m.key(i).time+'!!KrK!!'+m.key(i).comment;}x" ;
+		textLayer.Text.sourceText.expression = "var m=thisComp.marker;var x='';for(var i=1;i<=m.numKeys;i++){x+=(x==''?'':'&')+escape(m.key(i).time)+'='+escape(m.key(i).comment);}x" ;
 		textLayer.Text.sourceText.expressionEnabled = true;
 		text = String(textLayer.Text.sourceText.value) ;
 		textLayer.remove( );
-		markers = text.split('!!KRK!!');
+		markers = text.split('&');
 		for ( i = 0 ; i < markers.length ; i ++ )
 		{
-			marker = markers[i].split('!!KrK!!',2);
+			marker = markers[i].split('=',2);
 			if ( marker.length < 2 )
 			{
 				continue ;
@@ -626,7 +626,7 @@ function KRKComp( comp )
 			{
 				this.markers = [ ] ;
 			}
-			this.markers.push( { time: parseFloat( marker[0] )  , comment: marker[1] } ) ;
+			this.markers.push( { time: parseFloat( unescape( marker[0] ) ) , comment: unescape( marker[1] ) } ) ;
 		}
 	}
 
