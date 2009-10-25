@@ -132,5 +132,9 @@ For example, to link transform.position (make sure you have keyframes here or el
 
 Note: use scale in text animator to obtain syllable sizes.  This is a helper for the expression using sourceRectAtTime to obtain the size and the position of the layer, which is lacked in expression.  It may be slow, so you need to optimize it a bit.
 
+Example:
+{{{
+<dim size='effect("Point Control")(1)' pos='effect("Point Control 2")(1)' dur="syl" />
+}}}
 
 Basically, these XML configurations are similar to old functions, as they're used to call the old funs.
