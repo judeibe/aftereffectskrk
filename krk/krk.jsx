@@ -861,6 +861,7 @@ function KRKLayer( layer , options )
 	this.setprop = [ ] ;
 	this.precomp = false ;
 	this.threed = undefined ;
+	this.sizes = null ;
 	
 	/**
 	 * A function to resynchronize the properties on this object
@@ -1069,6 +1070,48 @@ function KRKLayer( layer , options )
 		this.p( x.@name.toString() , xx ) ;
 	}
 
+	this.@dim = this.@dimension = function( x )
+	{
+		var size = this.xml_value( x.@size ) ;
+		var loc = this.xml_value( x.@position ) ;
+		var prop ;
+		var bad = undefined ;
+		var extents = this.xml_bool( x.@extents ) ;
+		if ( typeof extents == 'undefined' ) { extents = true ; }
+		if ( typeof loc == 'undefined' )
+		{
+			loc = this.xml_value( x.@pos ) ;
+		}
+		var duration = this.xml_value( x.@dur ) ;
+		if ( typeof duration == 'undefined' )
+		{
+			duration = this.xml_value( x.@duration ) ;
+		}
+		if ( loc || size )
+		{
+			// Check
+			if ( loc )
+			{
+				if ( !this.getProperty(this.layer,loc) )
+				{
+					throw { message: "Bad Property: " + loc , layer: this.name , comp: this.comp.name , xml: x } ;
+				}
+			}
+			if ( size)
+			{
+				if ( !this.getProperty(this.layer,size) )
+				{
+					throw { message: "Bad Property: " + size , layer: this.name , comp: this.comp.name , xml: x } ;
+				}
+			}
+			this.sizes = { pos: loc , size: size , dur: duration , extents: extents } ;
+		}
+		else
+		{
+			throw { message: "You need to specify location or size, and or duration attributes in <dim>" , layer: this.name , comp: this.comp.name , xml:x } ;
+		}
+	}
+
 	this.a = function( animators , options )
 	{
 		this.adda( animators , options ) ;
@@ -1249,6 +1292,111 @@ function KRKLayer( layer , options )
 		return rect ;
 	}
 
+	this.getDims = function () 
+	{
+		var K = this.getKaraObject( ) ;
+		var k;
+		var i , j , jj ;
+		var size , dim , layer , bounds ;
+		var size0 , dim0 , value ;
+		var dur = parseFloat( this.sizes.dur ) ;
+		var t , t1 ;
+		var extents = this.sizes.extents ;
+		if ( !this.sizes ) { return ; }
+		for ( i in this.layers )
+		{
+			layer = this.layers[i] ;
+			t = layer.inPoint ;
+			t1 = layer.outPoint ;
+			if ( this.sizes.size && ( size = this.getProperty( layer , this.sizes.size ) ) )
+			{
+				while( size.numKeys )
+				{
+					size.removeKey( 1 ) ; // remove keyframes.
+				}
+				size0 = size.value ;
+			}
+			
+			if ( this.sizes.pos && ( dim = this.getProperty( layer , this.sizes.pos ) ) )
+			{
+				while( dim.numKeys )
+				{
+					dim.removeKey( 1 ) ; // remove keyframes.
+				}
+				dim0 = dim.value ;
+			}
+			if ( dur > 0 )
+			{
+				while( t <= t1 )
+				{
+					bounds = layer.sourceRectAtTime( t , extents ) ;
+					if ( size )
+					{
+						size.setValueAtTime( t , this.mergeArray( size0 , [ bounds.width , bounds.height ]  ) ) ;
+					}
+					if ( dim )
+					{
+						dim.setValueAtTime( t , this.mergeArray( dim0 , [ bounds.top , bounds.left ]  ) ) ;
+					}
+					t += dur ;
+				}
+			}
+			else if ( ! this.sizes.dur )
+			{
+				bounds = layer.sourceRectAtTime( t , extents );
+				if ( size )
+				{
+					size.setValue( this.mergeArray( size0 , [ bounds.width , bounds.height ]  ) ) ;
+				}
+				if ( dim )
+				{
+					dim.setValue( this.mergeArray( dim0 , [ bounds.top , bounds.left ]  ) ) ;
+				}
+			}
+			else
+			{ // Get from syllable timings
+				k = this.parseLayerName( layer , K ) ;
+				k = k.syl ? [ k.syl ] : ( k.line ? k.line : null ) ;
+				if ( k )
+				{
+					for ( j = 0 ; j < k.length ; j ++ )
+					{
+						for ( jj = 0 ; jj < 2 ; jj ++ )
+						{
+							t = jj ? k[j].time + k[j].dur : k[j].time ;
+							bounds = layer.sourceRectAtTime( t , extents ) ;
+							if ( size )
+							{
+								size.setValueAtTime( t , this.mergeArray( size0 , [ bounds.width , bounds.height ]  ) ) ;
+							}
+							if ( dim )
+							{
+								dim.setValueAtTime( t , this.mergeArray( dim0 , [ bounds.top , bounds.left ]  ) ) ;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	this.mergeArray = function( array1 , array2 )
+	{
+		var i ;
+		for ( i = 0 ; i < array1.length ; i ++)
+		{
+			if ( i < array2.length )
+			{
+				array1[i] = array2[i] ;
+			}
+			else
+			{
+				break ;
+			}
+		}
+		return array1 ;
+	}
+	
 	this.commit = function( )
 	{
 		var i , j , l , m ;
@@ -1263,6 +1411,7 @@ function KRKLayer( layer , options )
 		var item , item0 , $name ;
 		var threed , index ;
 		var $project = this.getParent("project")  ;
+		var location , size ;
 		// Check for default properties:
 		if ( this.old("Text") )
 		{
@@ -1372,6 +1521,10 @@ function KRKLayer( layer , options )
 						newLayer[this.setprop[l].name] = this.setprop[l].property ; } catch(err){ this.throw( { layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"  ("+this.setprop[l].property + ')'  } , err ) ; }
 					}
 				}
+			
+			// running sizes
+				this.getDims( ) ;
+
 			// precomposing
 				if ( this.precomp )
 				{
@@ -3474,7 +3627,7 @@ function KRKCommon( )
 			}
 			catch( err )
 			{
-				throw "AFX Property Error: " + names ;
+				return null ;
 			}
 		}
 		return o ;
