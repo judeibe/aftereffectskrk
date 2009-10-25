@@ -1061,7 +1061,16 @@ function KRKLayer( layer , options )
 	
 	this.@p = this.@prop = this.@property = function( x )
 	{
-		var xx = { syl: this.xml_bool( x.@syl ) ? true : undefined , fixed: this.xml_value( x.@fixed ) , pos: this.xml_value( x.@pos ) } ;
+		var fixed = this.xml_bool( x.@fixed ) ;
+		var fixed2 = this.xml_value( x.@fixed ) ;
+		if ( fixed )
+		{
+			switch( fixed2 )
+			{
+				case "start":
+			}
+		}
+		var xx = { syl: this.xml_bool( x.@syl ) ? true : undefined , fixed: this.getFixed( x.@fixed ) , pos: this.xml_value( x.@pos ) } ;
 		var comp = this.xml_value( x.@comp ) ;
 		var layer = this.xml_value( x.@layer ) ;
 		var link = this.xml_value( x.@link ) ;
@@ -1129,7 +1138,7 @@ function KRKLayer( layer , options )
 
 	this.@a = this.@anim = this.@animate = this.@animator = function( x )
 	{
-		this.a( x.@name.toString() , { syl: this.xml_bool( x.@syl ) ? true : undefined, fixed: this.xml_value( x.@fixed ) } ) ;
+		this.a( x.@name.toString() , { syl: this.xml_bool( x.@syl ) ? true : undefined, fixed: this.getFixed( x.@fixed ) } ) ;
 	}
 
 	/**
@@ -2180,6 +2189,7 @@ function KRKAnimator( animator , options )
 	this.caller = 'property' ;
 	this.old ;
 	this.dup_sel ;
+	this.fixed = undefined ;
 	/**
 	 * setUnits -- set the correct units in the selector
 	 */
@@ -2341,7 +2351,6 @@ function KRKAnimator( animator , options )
 		var kline = K[names.style][names.layer][names.line];
 		var kline2 ;
 		if ( style2 ) { kline2 = K[style2][names.layer][names.line]; }
-		fixed = fixed ? fixed : this.fixed ;
 		this.start.clearAllKeys( ) ;
 		this.end.clearAllKeys( ) ;
 		this.offset.clearAllKeys( ) ;
@@ -2360,7 +2369,7 @@ function KRKAnimator( animator , options )
 				syllables[syl[i]] = true ;
 			}
 		}
-		var o = fixed ? { fixed: fixed } : { } ;
+		var o = typeof fixed != 'undefined' ? { fixed: fixed } : { } ;
 		try{ this.old.sel.enabled = true ; } catch(e){ }
 		var start = 0 ;
 		this.sel = this.getSelector( ) ;
@@ -2595,7 +2604,7 @@ function KRKAnimator( animator , options )
 			this[prop].layer = this.layer ;
 		}
 		var o = this.parseLayerName( this.layer.layer.name ) ;
-		this.create( o.fixed , this.syl == undefined || this.syl == false || this.syl == null ? o.syl : this.syl , this.layer.layers2[this.layer.layer.name] ) ;
+		this.create( this.fixed , this.syl == undefined || this.syl == false || this.syl == null ? o.syl : this.syl , this.layer.layers2[this.layer.layer.name] ) ;
 		return this ;
 	}
 
@@ -2622,7 +2631,7 @@ function KRKProperty( property , options )
 	this.layers = {} ;
 	this.old = null ;
 	this.unique = true ;
-	this.fixed = false ;
+	this.fixed = undefined ;
 	this.position ;
 	this.link = null ;
 	this.options = { };
@@ -2650,7 +2659,6 @@ function KRKProperty( property , options )
 			}
 		}
 		this.is_syl = false ;
-		this.fixed = undefined ;
 		this.options = { } ;
 		if ( options )
 		{
@@ -2988,7 +2996,7 @@ function KRKProperty( property , options )
 		if ( syl == true && layerName.syl ) { syl = layerName.syl ; }
 		var k = K[layerName.style][layerName.layer][layerName.line] ;
 		var ks ;
-		var options = { } ;
+		var options = typeof this.fixed != 'undefined' ? { fixed: this.fixed } : { } ;
 		this.enableAllProperties( ) ;
 		
 		// Check for the links
@@ -4142,6 +4150,34 @@ KRKCommon.KEYFRAMES = [	  "value"
 
 KRKCommon.prototype.KRK_SYLLABLE = 4 ;
 KRKCommon.prototype.KRK_LINE = 3 ;
+
+KRKCommon.prototype.getFixed = function( value )
+	{
+		var fixed = this.xml_bool( value );
+		var fixed2 = this.xml_value( value ) ;
+		if ( fixed && fixed2 )
+		{
+			fixed2 = fixed2.toLowerCase( );
+			switch( fixed2 )
+			{
+				case "start":
+					fixed = 0 ;
+				break;
+				case "end":
+					fixed = 0 ;
+				case "^":
+				case "$":
+					fixed = fixed2 ;
+				break;
+				default:
+					fixed2 = parseInt( fixed2 ) ;
+					fixed = fixed2 ? fixed2 : 0 ;
+			}
+		}
+		return fixed ;
+	}
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
