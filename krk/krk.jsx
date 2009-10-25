@@ -52,10 +52,6 @@ if ( F.exists )
 */
 
 
-var KRK_SYLLABLE = 4 ;
-var KRK_LINE = 3 ;
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -438,6 +434,7 @@ function KRKProject( K )
 				layer = o.layer( i ) ;
 				if ( ( text = layer('Text') ) && text('Source Text').value )
 				{
+					KRKProject.KRK = layer ;
 					this.parseASS( String( text('Source Text').value ) ) ;
 					continue ;
 				}
@@ -1299,6 +1296,7 @@ function KRKLayer( layer , options )
 		var i , j , jj ;
 		var size , dim , layer , bounds ;
 		var size0 , dim0 , value ;
+		if ( !this.sizes ) { return ; }
 		var dur = parseFloat( this.sizes.dur ) ;
 		var t , t1 ;
 		var extents = this.sizes.extents ;
@@ -1413,12 +1411,20 @@ function KRKLayer( layer , options )
 		var $project = this.getParent("project")  ;
 		var location , size ;
 		// Check for default properties:
-		if ( this.old("Text") )
+		try
 		{
-			// Check for autospaces:
-			this.spacing = this.getAutoSpacing( ) ;
-			try { this.p( "effect('Position')('Point')" , {pos: this.old.name, syl:true} ) ; } catch( err ) { }
+			if ( this.old("Text") )
+			{
+				// Check for autospaces:
+				this.spacing = this.getAutoSpacing( ) ;
+				try { this.p( "effect('Position')('Point')" , {pos: this.old.name, syl:true} ) ; } catch( err ) { }
+			}
 		}
+		catch( err ){ this.throw( {
+					message: "Error calculating zero space" ,
+					layer: this.name ,
+					comp: this.comp.name
+				} , err ) ; }
 
 		// Adding new layers
 		for ( k = 0 ; k < this.addlayers.length ; k ++ )
@@ -1830,19 +1836,31 @@ function KRKLayer( layer , options )
 		var anim = options.anim == undefined ? null : ( options.anim instanceof Array ? options.anim : [options.anim] ) ;
 		var prop = options.prop == undefined ? null : ( options.prop instanceof Array ? options.prop : [options.prop] ) ;
 		var name ;
-		var level = options.syl ? KRK_SYLLABLE : KRK_LINE ;
+		var level = options.syl ? this.KRK_SYLLABLE : this.KRK_LINE ;
 		for ( i in keys )
 		{
 			k = keys[i] ;
 			if ( k.length == level )
 			{
-				this.layer = this.create( options.spacing == undefined ? null : options.spacing , options[2] ? [ k[0] , options[2] ] : k[0] , k[1] , k[2] , options.syl ? ( options.syl == "all" ? -k[3] : k[3] ) : undefined , options.fixed ) ;
-				if ( options[2] )
-				{
-					this.layers2[this.layer.name] = options[2] ;
+				try {
+					this.layer = this.create( options.spacing == undefined ? null : options.spacing , options[2] ? [ k[0] , options[2] ] : k[0] , k[1] , k[2] , options.syl ? ( options.syl == "all" ? -k[3] : k[3] ) : undefined , options.fixed ) ;
+					if ( options[2] )
+					{
+						this.layers2[this.layer.name] = options[2] ;
+					}
+					if ( anim ) { this.commitAnimators[this.layer.name] ; }
+					if ( prop ) { this.commitProperties[this.layer.name] ; }
 				}
-				if ( anim ) { this.commitAnimators[this.layer.name] ; }
-				if ( prop ) { this.commitProperties[this.layer.name] ; }
+				catch( err )
+				{
+					this.throw( {
+							message: "Error adding lines" ,
+							layer: this.name ,
+							comp: this.comp.name ,
+							kara: { style: k[0] , layer: k[1], line: k[2] + 1 , syl: k[3] + 1 }
+						} , 
+					err ) ; 
+				}
 			}
 		}
 		return this ;
@@ -1865,7 +1883,7 @@ function KRKLayer( layer , options )
 		{
 			options = {syl: options} ;
 		}
-		level = options.syl ? KRK_SYLLABLE : KRK_LINE ;
+		level = options.syl ? this.KRK_SYLLABLE : this.KRK_LINE ;
 		template = this.layers.old ;
 		// var keys = this.recurseObject( K , level , key == undefined ? null : key ) ;
 //		var keys = this.recurseKaraoke( level  , key ) ;
@@ -2719,14 +2737,14 @@ function KRKProperty( property , options )
 	this.pos = function( norm )
 	{
 		var K = this.getKaraObject( ) ;
-		var kline = this.obj( K , this.names , KRK_LINE );
+		var kline = this.obj( K , this.names , this.KRK_LINE );
 		var j , l , k , ks ;
 		var start , end ;
 	
 		if ( this.property instanceof Object )
 		{
 			var mul = norm ? 1/norm : 1 ;
-			for ( k in this.names.length == KRK_SYLLABLE ? [kline[this.names[KRK_SYLLABLE-1]]] : kline )
+			for ( k in this.names.length == this.KRK_SYLLABLE ? [kline[this.names[this.KRK_SYLLABLE-1]]] : kline )
 			{
 				ks = kline[k] ;
 				property.setKeys( { mul:mul
@@ -4032,13 +4050,17 @@ KRKCommon.error_alert = function( e )
 		"message": "" ,
 		"comp": "Comp: " ,
 		"layer": "Layer: " ,
+		"animator": "Animator: " ,
+		"property": "Property: " ,
+		"setting": "Setting: ",
+		"kara": "Karaoke: " ,
 		"number": "Error Code: " ,
 		"line": "KRK's Line #" ,
 		"name": "Name: " ,
 		"description": "Description: " ,
 		"xml": "--== XML ==--\n"
 	} ;
-	var $string , i , text ; 
+	var $string , i , j , text , $text ; 
 	if ( e instanceof Object )
 	{
 		$string = '' ;
@@ -4051,12 +4073,40 @@ KRKCommon.error_alert = function( e )
 				{
 					$string += "\n" ;
 				}
-				$string += syntax[i] + ( typeof text == 'xml' ? text.toXMLString( ) : text ) ;
+				if ( text instanceof Array )
+				{
+					$text = text ;
+					text = '' ;
+					for ( j = 0 ; j < $text.length ; j ++ )
+					{
+						if ( text !== '' ) { text += ', ' ; }
+						text += $text[j] ;
+					}
+				}
+				else if ( typeof text == 'xml' )
+				{
+					text = text.toXMLString( ) ;
+				}
+				else if ( text instanceof Object )
+				{
+					$text = text ;
+					text = '' ;
+					for ( j = 0 ; j < $text.length ; j ++ )
+					{
+						if ( text !== '' ) { text += ', ' ; }
+						text += j + ": " + $text[j] ;
+					}
+				}
+				$string += syntax[i] + text ;
 			}
 		}
 		if ( $string !== '' )
 		{
-			alert($string);
+			alert($string + "\n(This message is copied to KRK's text layer's comment)");
+			if ( KRKProject.KRK )
+			{
+				KRKProject.KRK.comment = "LAST ERROR MESSAGE:\n" + $string ;
+			}
 		}
 	}
 }
@@ -4084,6 +4134,9 @@ KRKCommon.KEYFRAMES = [	  "value"
 					, "temporalAutoBezier"
 					, "spatialAutoBezier" ]  ;
 
+
+KRKCommon.prototype.KRK_SYLLABLE = 4 ;
+KRKCommon.prototype.KRK_LINE = 3 ;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -4124,7 +4177,6 @@ try{ !krk } catch( err ){ krk = null ; }
 				if ( confirm( 'It seems to be good to go!!\nThe generated comps and layers also have been purged.\n\nDo you want to commit your settings and generate the layers?\n\nNote: It may take a few minutes to generate depending upon how many layers and properties required to be generated.' ) )
 				{
 					karaoke.commit( ) ;
-					//karaoke.commit( ) ;			
 					karaoke.topLayers( ) ;
 				}
 				karaoke.end( ) ;
