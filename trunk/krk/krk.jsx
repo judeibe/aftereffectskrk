@@ -4123,7 +4123,7 @@ try{ !krk } catch( err ){ krk = null ; }
 				karaoke.begin( ) ;
 				if ( confirm( 'It seems to be good to go!!\nThe generated comps and layers also have been purged.\n\nDo you want to commit your settings and generate the layers?\n\nNote: It may take a few minutes to generate depending upon how many layers and properties required to be generated.' ) )
 				{
-					try{ karaoke.commit( ) ; } catch(err){ alert( (err.comp ? "Comp: " + err.comp : "" ) + (err.layer ? "Layer: " + err.layer: "" )+ "\nCode: " + err.number + "\nMessage:\n" + err.description ); }
+					karaoke.commit( ) ;
 					//karaoke.commit( ) ;			
 					karaoke.topLayers( ) ;
 				}
