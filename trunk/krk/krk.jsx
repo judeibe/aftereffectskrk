@@ -3487,10 +3487,10 @@ function KRKCommon( )
 		
 		var fixed = undefined ;
 		var startTime , endTime ;
-		if ( typeof o.fixed == 'undefined' )
+/*		if ( typeof o.fixed == 'undefined' )
 		{
 			o.fixed = that.fixed ;
-		}
+		}*/
 		if ( o.fixed == '^' )
 		{
 			return t + o.startTime - that.startTime ;
@@ -3555,10 +3555,10 @@ function KRKCommon( )
 		var that = o['time'] ? o['time'] : this.time ;
 		var fixed = undefined ;
 		var startTime , endTime ;
-		if ( typeof o.fixed == 'undefined' )
+/*		if ( typeof o.fixed == 'undefined' )
 		{
 			o.fixed = that.fixed ;
-		}
+		}*/
 		if ( o.fixed == '^' )
 		{
 			return t + o.startTime - that.startTime ;
