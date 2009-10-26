@@ -34,6 +34,23 @@ To use this feature, create two layers.  One is called "In" and the other is cal
   * Out: Range Selector->Advanced->Shape = Ramp Down; keyframes for selectors: Start = 0% at all times, End = 0% to 100% at the end.
   * <a name="In" />
 
+= Fixed Syllable timings =
+There are two ways to do this.
+  # XML Configuration:
+{{{
+<a name="animator" syl="true" fixed="{FIXED}" />
+}}}
+  # Range Selector's Name is {FIXED}.  The default name is Range Selector 1.  Replace it with {FIXED}, as shown below.  Note: with the release of version 0.64, you can add as many range selectors as you want to, not limiting to 1.
+{FIXED} can be the following:
+  * ^: beginning of the line (the keyframes on the [ marker will be the start of the syllable/line timing)
+  * $: end of the line (keyframes on the ] marker will be the end of the syllable/line timing)
+  * start is synonym to ^ (for those who don't know about regular expressions)
+  * end is synonym to $ (for those who don't know about regular expressions)
+  * Number (i.e., 50): It's a percentage of the syllable.  The timing always starts at [ marker.
+  *   Note: 0 is synonym to start and ^.
+  * Number with a percent (i.e., 50%): same as the number, but with this, you can put add any text with this percent value instead of saying a number. For example: Cool Start 10%.
+
+
 = One Layered Syllable Effects =
 The settings are as follows:
 
