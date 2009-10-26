@@ -4221,7 +4221,7 @@ KRKCommon.prototype.getFixed = function( value )
 				break;
 				default:
 					fixed2 = parseInt( fixed2 ) ;
-					fixed = fixed2 ? fixed2 : 0 ;
+					fixed = isNaN( fixed2 ) ? undefined : fixed2 ;
 			}
 		}
 		return fixed ;
