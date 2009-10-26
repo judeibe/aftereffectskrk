@@ -341,17 +341,17 @@ function KRKProject( K )
 		}
 		if ( undoName != false )
 		{
-			this.end( ) ;			
+			this.end( ) ;
 		}
 	}
 
 	this.topLayers = function( ) 
 	{
-		var o , i , j , k , comp , layer ;
+		var o , i , j , k , l , comp , layer , genlayers ,layer2 ;
 		for ( i in this.comps )
 		{
 			comp = this.comps[i] ;
-			k = 0 ;
+			kk = k = 0 ;
 			for( i in comp.layers )
 			{
 				if ( !k )
@@ -468,13 +468,13 @@ function KRKProject( K )
 				for( i = 1 ; i <= comp.layers.length ; i ++ )
 				{
 					layer = comp.layers[i] ;
-					if ( o = this.parseLayerName( layer.name ) )
+					if ( String(layer.name).match( /[^\[]+\[[^\]]+\]\[\d+\]/ ) )
 					{
 						l ++ ;
 						// Throttled removals.
 						while ( 1 )
 						{
-							try{ layer.remove( ) }
+							try{ layer.locked = false ; layer.remove( ) }
 							catch( err )
 							{
 								break ;
@@ -803,10 +803,15 @@ function KRKComp( comp )
 	{
 		var layers = this.layers ;
 		var newLayer ;
+		var k = 0 ;
+		var name ;
 		for ( j in layers )
 		{
 			layer = layers[j] ;
-			layer.commit( ) ;		
+			name = layer.old.name ;
+			layer.old.moveToEnd( ) ;
+			layer.old = this.comp.layer( name ) ;
+			layer.commit( ) ;
 		}
 	}
 
