@@ -736,24 +736,10 @@ function KRKComp( comp )
 		var threed , krklayer , children , f , j , i ;
 		var fixed ;
 		try { 
-			fixed = this.xml_value( layer.@fixed ) ;
-			if ( fixed ) 
+			fixed = this.getFixed( layer.@fixed ) ;
+			if ( typeof fixed == 'number' )
 			{
-				fixed = fixed.toLowerCase( );
-				switch (fixed)
-				{
-					case 'start':
-						fixed = '^' ;
-						break;
-					case 'end':
-						fixed = '$' ;
-						break;
-					case '^':
-					case '$':
-						break;
-					default:
-						fixed = this.xml_bool( layer.@fixed ) ;
-				}
+				fixed = true ;
 			}
 			threed = this.xml_bool( layer.@threed)
 			if ( typeof threed == 'undefined' ) { threed = this.xml_bool( layer.@threeD ) ; } 
@@ -2180,6 +2166,10 @@ function KRKAnimator( animator , options )
 	this.start = null ;
 	this.end = null ;
 	this.offset = null ;
+	this.array_start ;
+	this.array_end;
+	this.array_offset ;
+	this.array_old ;
 	this.animator = null ;
 	this.namesAnimator ;
 	this.namesKaraoke ;
@@ -2190,6 +2180,9 @@ function KRKAnimator( animator , options )
 	this.old ;
 	this.dup_sel ;
 	this.fixed = undefined ;
+	this.currentSelector = 0 ;
+	this.selectorFixed = undefined ;
+	this.selectorIndex = undefined ;
 	/**
 	 * setUnits -- set the correct units in the selector
 	 */
@@ -2205,22 +2198,31 @@ function KRKAnimator( animator , options )
 	 */
 	this.constructor = function( animator , options )
 	{
+		var i , j;
 		if ( animator != undefined )
 		{
+			this.array_start =  [ ] ;
+			this.array_end = [ ] ;
+			this.array_offset = [ ] ;
+			this.array_old = [ ] ;
 			this.ref( animator , options ) ;
-			this.name = this.animator.name ;
 			var o = ['start' , 'end' , 'offset'] ;
 			delete this.old;
-			this.old = { } ;
-			for ( var i in o )
+			for ( j = 0 ; j < this.selectorIndex.length ; j ++ )
 			{
-				this.old[o[i]] = this[o[i]] = new KRKProperty( this.sel(o[i]) ) ;
-				this[o[i]].parent = this ;
+				this.sel = this.getSelector( j ) ;
+				this.array_old[j] = this.old = { } ;
+				for ( i in o )
+				{
+					this.old[o[i]] = this[o[i]] = this['array_' + o[i]][j] = new KRKProperty( this.sel(o[i]) ) ;
+					this[o[i]].parent = this ;
+				}
+				this.old.sel = this.sel ;
+				this.old.animator = this.animator ;
+				this.selectorType = this.sel.advanced.basedOn.value ;
+				this.selectors = { } ;
 			}
-			this.old.sel = this.sel ;
-			this.old.animator = this.animator ;
-			this.selectorType = this.sel.advanced.basedOn.value ;
-			this.selectors = { } ;
+			this.sel = this.getSelector( 0 ) ;
 		}
 		return this ;
 	}
@@ -2246,11 +2248,17 @@ function KRKAnimator( animator , options )
 	
 	this.dup = function( name )
 	{
-		this.sel = this.sel.parentProperty(1).duplicate( ) ;
+		var sel , index ;
+		var $name ;
+		sel = this.sel.parentProperty(this.selectorIndex[this.currentSelector]) ;
+		$name = sel.name ;
+		sel = sel.duplicate( );
 		if ( name != undefined )
 		{
-			this.sel.name = name ;
+			sel.name = $name + " " + name ;
 		}
+		sel.moveTo( index = sel.parentProperty.numProperties ) ;
+		this.sel = this.getSelector( -index ) ;
 		return this ;
 	}
 	
@@ -2266,10 +2274,48 @@ function KRKAnimator( animator , options )
 		this.offset = krk.offset
 		this.layer = krk.layer ;
 	}
-
-	this.getSelector = function( )
+	
+	this.getSelector = function( i )
 	{
-		return this.layer.layer('Text')('Animators')(this.name)('selector')(1) ;
+		var sel =this.layer.layer('Text')('Animators')(this.name)('selector');
+		if ( typeof i == 'undefined' )
+		{
+			i = this.currentSelector ;
+		}
+		else if ( i < 0 )
+		{
+			return sel(-i);
+		}
+		else
+		{
+			this.currentSelector = i ;
+		}
+		this.fixed = this.selectorFixed[i] ;
+		this.start = this.array_start[i] ;
+		this.end = this.array_end[i] ;
+		this.offset = this.array_offset[i] ;
+		this.old = this.array_old[i] ;
+		return this.sel = sel( this.selectorIndex[i] ) ;
+	}
+	
+	this.storeSelectors = function( )
+	{
+		this.selectorIndex = [ ] ;
+		this.selectorFixed = [ ] ;
+		var selector = this.layer.layer('Text')('Animators')(this.name)('selector') ;
+		var name ;
+		var sel ;
+		var fixed ;
+		var i , j ;
+		for ( i = 1 , j = 0 ; i <= selector.numProperties ; i ++)
+		{
+			sel = selector(i) ;
+			if ( sel.name.match( /KRK/ ) ) { continue ; }
+			this.selectorIndex[j] = i ;
+		// parse the name.
+			this.selectorFixed[j] = this.getFixed( String( sel.name).toLowerCase( ) ) ;
+			j ++ ;
+		}
 	}
 
 	/**
@@ -2303,6 +2349,8 @@ function KRKAnimator( animator , options )
 				this.fixed = undefined ;
 			}
 		}
+		this.name = this.animator.name ;
+		this.storeSelectors( ) ;
 		return this ;
 	}
 
@@ -2451,7 +2499,7 @@ function KRKAnimator( animator , options )
 						o.mul = 1 ;
 						if ( syllables instanceof Object ? syllables[i] : true )
 						{
-							this.dup( "Karaoke " + i ) ;
+							this.dup( "KRK " + i ) ;
 							this.sel.enabled = true ;
 							this.start.property = this.sel('start') ;
 							this.end.property = this.sel('end') ;
@@ -2484,7 +2532,7 @@ function KRKAnimator( animator , options )
 					o.start = !ii ? 0 : o.end ;
 					o.end = !ii ? ( this.selectorType == 3 ? lensyl : ( this.selectorType == 2 ? text.length : lensyl ) ) / len : 1 ; 
 					o.mul = 1 ;
-					this.dup( "Karaoke " + String(ii+1) ) ;
+					this.dup( "KRK " + String(ii+1) ) ;
 					this.sel.enabled = true ;
 					this.start.property = this.sel('start') ;
 					this.end.property = this.sel('end') ;
@@ -2542,7 +2590,7 @@ function KRKAnimator( animator , options )
 					o.mul = 1 ;
 					if ( syllables instanceof Object ? syllables[i] : true )
 					{
-						this.dup( "Karaoke " + i ) ;
+						this.dup( "KRK " + i ) ;
 						this.sel.enabled = true ;
 						this.start.property = this.sel('start') ;
 						this.end.property = this.sel('end') ;
@@ -2566,7 +2614,7 @@ function KRKAnimator( animator , options )
 			}
 			else
 			{
-				this.dup( "Karaoke 1" ) ;
+				this.dup( "KRK 1" ) ;
 				this.sel.enabled = true ;
 				this.start.property = this.sel('start') ;
 				this.end.property = this.sel('end') ;
@@ -2590,21 +2638,22 @@ function KRKAnimator( animator , options )
 	this.commit = function( )
 	{
 		var properties = [ 'start' , 'end' , 'offset' ] ;
-		var i ;
+		var i , j ;
 		var prop ;
 		var sel ;
-		try
-		{ sel = this.sel = this.getSelector( ) ; }
-		catch( err ) { this.anim.enabled = true ; return false ; }
-		for ( i in properties )
+		for ( j = 0 ; j < this.selectorIndex.length ; j ++ )
 		{
-			prop = properties[i] ;
-			this[prop].property = sel(prop) ;
-			this[prop].animator = this ;
-			this[prop].layer = this.layer ;
+			sel = this.sel = this.getSelector( j) ;
+			for ( i in properties )
+			{
+				prop = properties[i] ;
+				this[prop].property = sel(prop) ;
+				this[prop].animator = this ;
+				this[prop].layer = this.layer ;
+			}
+			var o = this.parseLayerName( this.layer.layer.name ) ;
+			this.create( this.fixed , this.syl == undefined || this.syl == false || this.syl == null ? o.syl : this.syl , this.layer.layers2[this.layer.layer.name] ) ;
 		}
-		var o = this.parseLayerName( this.layer.layer.name ) ;
-		this.create( this.fixed , this.syl == undefined || this.syl == false || this.syl == null ? o.syl : this.syl , this.layer.layers2[this.layer.layer.name] ) ;
 		return this ;
 	}
 
@@ -3499,8 +3548,8 @@ function KRKCommon( )
 		{
 			return t + o.endTime - that.endTime ;
 		}
-		fixed = typeof o.fixed != 'boolean' ? parseInt( o.fixed == 'start' ? 0 : ( o.fixed == 'end' ? 100 : o.fixed ) ) : ( fixed ? 0 : undefined ) ;
-		if ( fixed >= 0 && fixed <= 100 )
+		fixed = typeof o.fixed != 'boolean' ? parseInt( o.fixed ) : ( fixed ? 0 : undefined ) ;	
+		if ( fixed === 0 || fixed )
 		{
 			return t + o.startTime - that.startTime + ( o.endTime - o.startTime ) * fixed * 0.01 ;
 		}
@@ -3567,8 +3616,8 @@ function KRKCommon( )
 		{
 			return t + o.endTime - that.endTime ;
 		}
-		fixed = typeof o.fixed != 'boolean' ? parseInt( o.fixed == 'start' ? 0 : ( o.fixed == 'end' ? 100 : o.fixed ) ) : ( fixed ? 0 : undefined ) ;
-		if ( fixed >= 0 && fixed <= 100 )
+		fixed = typeof o.fixed != 'boolean' ? parseInt( o.fixed ) : ( fixed ? 0 : undefined ) ;
+		if ( fixed === 0 || fixed )
 		{
 			return t + o.startTime - that.startTime + ( o.endTime - o.startTime ) * fixed * 0.01 ;
 		}
@@ -4161,10 +4210,11 @@ KRKCommon.prototype.getFixed = function( value )
 			switch( fixed2 )
 			{
 				case "start":
-					fixed = 0 ;
+					fixed = '^' ;
 				break;
 				case "end":
-					fixed = 0 ;
+					fixed = '$' ;
+				break;
 				case "^":
 				case "$":
 					fixed = fixed2 ;
@@ -4176,7 +4226,6 @@ KRKCommon.prototype.getFixed = function( value )
 		}
 		return fixed ;
 	}
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
