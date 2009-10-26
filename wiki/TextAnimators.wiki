@@ -48,7 +48,7 @@ There are two ways to do this.
   * end is synonym to $ (for those who don't know about regular expressions)
   * Number (i.e., 50): It's a percentage of the syllable.  The timing always starts at [ marker.
   *   Note: 0 is synonym to start and ^.
-  * Number with a percent (i.e., 50%): same as the number, but with this, you can put add any text with this percent value instead of saying a number. For example: Cool Start 10%.
+  * Number with a percent (i.e., 50%): same as the number, but with this, you can add in any text with this percent value instead of saying a number. For example: Cool Start 10%.
 
 
 = One Layered Syllable Effects =
