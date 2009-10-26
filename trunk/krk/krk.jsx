@@ -737,7 +737,11 @@ function KRKComp( comp )
 		var fixed ;
 		try { 
 			fixed = this.getFixed( layer.@fixed ) ;
-			if ( typeof fixed == 'number' )
+			if ( typeof fixed == 'undefined' )
+			{
+				fixed = this.xml_bool(layer.@fixed);
+			}
+			else if ( typeof fixed == 'number' )
 			{
 				fixed = true ;
 			}
@@ -2310,10 +2314,11 @@ function KRKAnimator( animator , options )
 		for ( i = 1 , j = 0 ; i <= selector.numProperties ; i ++)
 		{
 			sel = selector(i) ;
+			sel.enabled = false ;
 			if ( sel.name.match( /KRK/ ) ) { continue ; }
 			this.selectorIndex[j] = i ;
 		// parse the name.
-			this.selectorFixed[j] = this.getFixed( String( sel.name).toLowerCase( ) ) ;
+			this.selectorFixed[j] = this.getFixed( String(sel.name) ) ;
 			j ++ ;
 		}
 	}
