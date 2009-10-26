@@ -1133,7 +1133,14 @@ function KRKLayer( layer , options )
 
 	this.@a = this.@anim = this.@animate = this.@animator = function( x )
 	{
-		this.a( x.@name.toString() , { syl: this.xml_bool( x.@syl ) ? true : undefined, fixed: this.getFixed( x.@fixed ) } ) ;
+		try
+		{
+			this.a( x.@name.toString() , { syl: this.xml_bool( x.@syl ) ? true : undefined, fixed: this.getFixed( x.@fixed ) } ) ;
+		}
+		catch(err)
+		{
+			this.throw( {message: err.number == 21 ? "Bad Animator's name.  Make sure you have your animator's name correct!" : err.message } , err ) ;
+		}
 	}
 
 	/**
@@ -4214,24 +4221,30 @@ KRKCommon.prototype.getFixed = function( value )
 	{
 		var fixed = this.xml_bool( value , true );
 		var fixed2 = this.xml_value( value ) ;
+		var fixed3 ;
 		if ( fixed && fixed2 )
 		{
 			fixed2 = fixed2.toLowerCase( );
-			switch( fixed2 )
+			
+			if ( fixed2 == 'start' || fixed2.match( /\^/ ) )
 			{
-				case "start":
-					fixed = '^' ;
-				break;
-				case "end":
-					fixed = '$' ;
-				break;
-				case "^":
-				case "$":
-					fixed = fixed2 ;
-				break;
-				default:
-					fixed2 = parseInt( fixed2 ) ;
-					fixed = isNaN( fixed2 ) ? undefined : fixed2 ;
+				fixed = '^' ;
+			}
+			else if ( fixed2 == 'end' || fixed2.match( /\$/ ) )
+			{
+				fixed = '$'
+			}
+			else if ( fixed3 = fixed2.match( /-?\d+\%/ ) )
+			{
+				fixed = parseInt( fixed3[0] ) ;
+			}
+			else if ( ! isNaN( fixed3 = parseInt( fixed2 ) ) )
+			{
+				fixed = fixed3 ;
+			}
+			else
+			{
+				fixed = undefined ;
 			}
 		}
 		return fixed ;
