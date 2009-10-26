@@ -1,6 +1,6 @@
 ﻿/************************************************************************
 @NAME After-Effects Karaoke Framework
-@VERSION SVN Development Status
+@VERSION 0.65-svn
 @AUTHOR pichu
 @License LGPL
 
@@ -1316,7 +1316,7 @@ function KRKLayer( layer , options )
 	{
 		var K = this.getKaraObject( ) ;
 		var k;
-		var i , j , jj ;
+		var i , j , jj  , markers ;
 		var size , dim , layer , bounds ;
 		var size0 , dim0 , value ;
 		if ( !this.sizes ) { return ; }
@@ -1557,17 +1557,30 @@ function KRKLayer( layer , options )
 			// precomposing
 				if ( this.precomp )
 				{
+					var markers ;
 					threed  = newLayer.threeDLayer ;
 					$name = newLayer.name ;
 					item = this.comp.comp.layers.precompose( [ index = newLayer.index ] , $name , true ) ;
 					item.parentFolder = $project.folder ;
 					item0 = this.comp.comp.layers[index];
+					newLayer = item0.source.layer(1) ;
+					markers = newLayer( "Marker" ) ;					
+					if ( markers )
+					{
+						for ( i = 1 ; i <= markers.numKeys ; i ++ )
+						{
+							item0("Marker").setValueAtTime( markers.keyTime( i ) , markers.keyValue( i ) ) ;
+						}
+					}
 					if ( item0.canSetCollapseTransformation )
 					{
 						item0.collapseTransformation = true ;
 					}
 					item0.threeDLayer = threed ;
 					item0.name = $name ;
+					i = newLayer.stretch / 100 ;
+					item0.inPoint = newLayer.inPoint * i + newLayer.startTime ;
+					item0.outPoint = newLayer.outPoint * i + newLayer.startTime ;
 				}
 			}
 		}
@@ -2326,8 +2339,8 @@ function KRKAnimator( animator , options )
 		for ( i = 1 , j = 0 ; i <= selector.numProperties ; i ++)
 		{
 			sel = selector(i) ;
-			sel.enabled = false ;
 			if ( sel.name.match( /KRK/ ) ) { continue ; }
+			sel.enabled = false ;
 			this.selectorIndex[j] = i ;
 		// parse the name.
 			this.selectorFixed[j] = this.getFixed( String(sel.name) ) ;
