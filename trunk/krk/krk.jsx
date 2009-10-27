@@ -55,8 +55,6 @@ if ( F.exists )
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-( function() {
-
 /** KRKProject( K ) -- Main Karaoke Project Prototype: LEVEL 1
  * @param K -- Karaoke JSON, Generated from an external script
  */
@@ -73,6 +71,8 @@ function KRKProject( K )
 	this.project = app.project ;
 	this.folder = null ;
 	this.currentIndex = 0 ;
+	this.krkComp ;
+	this.krkText ;
 	/**
 	 * A Constructor
 	 * @param K -- Karaoke JSON, Generated from an external script
@@ -333,7 +333,7 @@ function KRKProject( K )
 	 */
 	this.commit = function( undoName )
 	{
-		var i , j , k , layers , layer , newLayer , comps ;
+		var i , j , k , layers , layer , newLayer , comps , comp ;
 		for ( i in this.comps )
 		{
 			comp = this.comps[i] ;
@@ -429,14 +429,18 @@ function KRKProject( K )
 	this.@codes = function( )
 	{
 		var o , layer , text , k , t , e , comp ;
-		if ( o = this.getAObject( "KRK" ) )
+		if ( this.comps )
+		{
+			delete(this.comps);
+		}
+		if ( this.krkComp = o = this.getAObject( "KRK" ) )
 		{
 			for ( i = 1 ; i <= o.numLayers ; i ++ ) 
 			{
 				layer = o.layer( i ) ;
 				if ( ( text = layer('Text') ) && text('Source Text').value )
 				{
-					KRKProject.KRK = layer ;
+					this.krkText = layer ;
 					this.parseASS( String( text('Source Text').value ) ) ;
 					continue ;
 				}
@@ -4135,73 +4139,7 @@ KRKCommon.prototype.xml_bool = function( x , nonzero )
 	return undefined ;
 }
 
-KRKCommon.error_alert = function( e )
-{
-	var syntax =
-	{
-		"message": "" ,
-		"comp": "Comp: " ,
-		"layer": "Layer: " ,
-		"animator": "Animator: " ,
-		"property": "Property: " ,
-		"setting": "Setting: ",
-		"kara": "Karaoke: " ,
-		"number": "Error Code: " ,
-		"line": "KRK's Line #" ,
-		"name": "Name: " ,
-		"description": "Description: " ,
-		"xml": "--== XML ==--\n"
-	} ;
-	var $string , i , j , text , $text ; 
-	if ( e instanceof Object )
-	{
-		$string = '' ;
-		for ( i in syntax )
-		{
-			text = e[i] ;
-			if ( typeof text != 'undefined' )
-			{
-				if ( $string !== '' )
-				{
-					$string += "\n" ;
-				}
-				if ( text instanceof Array )
-				{
-					$text = text ;
-					text = '' ;
-					for ( j = 0 ; j < $text.length ; j ++ )
-					{
-						if ( text !== '' ) { text += ', ' ; }
-						text += $text[j] ;
-					}
-				}
-				else if ( typeof text == 'xml' )
-				{
-					text = text.toXMLString( ) ;
-				}
-				else if ( text instanceof Object )
-				{
-					$text = text ;
-					text = '' ;
-					for ( j = 0 ; j < $text.length ; j ++ )
-					{
-						if ( text !== '' ) { text += ', ' ; }
-						text += j + ": " + $text[j] ;
-					}
-				}
-				$string += syntax[i] + text ;
-			}
-		}
-		if ( $string !== '' )
-		{
-			alert($string + "\n(This message is copied to KRK's text layer's comment)");
-			if ( KRKProject.KRK )
-			{
-				KRKProject.KRK.comment = "LAST ERROR MESSAGE:\n" + $string ;
-			}
-		}
-	}
-}
+
 KRKCommon.prototype.throw = function( new_err , old_err )
 {
 	var i ;
@@ -4263,7 +4201,110 @@ KRKCommon.prototype.getFixed = function( value )
 		return fixed ;
 	}
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///        GUI
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+function KRKGUI () 
+{
+	this.project = new KRKProject( ) ;
+	this.run = function( )
+	{
+		try
+		{
+			if ( this.project.@codes( ) )
+			{
+				this.project.begin( ) ;
+				if ( confirm( 'It seems to be good to go!!\nThe generated comps and layers also have been purged.\n\nDo you want to commit your settings and generate the layers?\n\nNote: It may take a few minutes to generate depending upon how many layers and properties required to be generated.' ) )
+				{
+					this.project.commit( ) ;
+					this.project.topLayers( ) ;
+				}
+				this.project.end( ) ;
+			}
+			else if ( typeof krkx == 'undefined' )
+			{
+				alert( 'Possible Reasons of Failure:\n\n1.  "KRK" Composition is not found.\n2.  You have not added any compositions in KRK Comp,\n3.  Make sure at least one comp layer in "KRK" comp is NOT SHY.\n4.  You have not provided the karaoke .ass paste in the topmost text layer.' ) ;
+			}
+			this.project.destruct( ) ;
+		} 
+		catch( e )
+		{
+			this.error_alert( e ) ;
+		}
+	}
+}
+
+KRKGUI.prototype = new KRKCommon( ) ;
+
+// Error alert
+KRKGUI.prototype.error_alert = function( e )
+{
+	var syntax =
+	{
+		"message": "" ,
+		"comp": "Comp: " ,
+		"layer": "Layer: " ,
+		"animator": "Animator: " ,
+		"property": "Property: " ,
+		"setting": "Setting: ",
+		"kara": "Karaoke: " ,
+		"number": "Error Code: " ,
+		"line": "KRK's Line #" ,
+		"name": "Name: " ,
+		"description": "Description: " ,
+		"xml": "--== XML ==--\n"
+	} ;
+	var $string , i , j , text , $text ; 
+	if ( e instanceof Object )
+	{
+		$string = '' ;
+		for ( i in syntax )
+		{
+			text = e[i] ;
+			if ( typeof text != 'undefined' )
+			{
+				if ( $string !== '' )
+				{
+					$string += "\n" ;
+				}
+				if ( text instanceof Array )
+				{
+					$text = text ;
+					text = '' ;
+					for ( j = 0 ; j < $text.length ; j ++ )
+					{
+						if ( text !== '' ) { text += ', ' ; }
+						text += $text[j] ;
+					}
+				}
+				else if ( typeof text == 'xml' )
+				{
+					text = text.toXMLString( ) ;
+				}
+				else if ( text instanceof Object )
+				{
+					$text = text ;
+					text = '' ;
+					for ( j = 0 ; j < $text.length ; j ++ )
+					{
+						if ( text !== '' ) { text += ', ' ; }
+						text += j + ": " + $text[j] ;
+					}
+				}
+				$string += syntax[i] + text ;
+			}
+		}
+		if ( $string !== '' )
+		{
+			alert($string + "\n(This message is copied to KRK's text layer's comment)");
+			if ( this.project && this.project.krkText )
+			{
+				this.project.krkText.comment = "LAST ERROR MESSAGE:\n" + $string ;
+			}
+		}
+	}
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -4285,44 +4326,8 @@ KRKProperty.prototype = new KRKCommon( ) ;
 
 /** AUTO ADD **/
 
-{
-	var krkx;
-try{ !krk } catch( err ){ krk = null ; }
-
-	if ( !krk )
-	{
-		try
-		{
-			var karaoke = new KRKProject( ) ;
-		/*	karaoke.codes( ) ;
-			if ( karaoke.evaluate( ) == null )
-			{	*/
-			if ( krkx = karaoke.@codes( ) )
-			{
-				karaoke.begin( ) ;
-				if ( confirm( 'It seems to be good to go!!\nThe generated comps and layers also have been purged.\n\nDo you want to commit your settings and generate the layers?\n\nNote: It may take a few minutes to generate depending upon how many layers and properties required to be generated.' ) )
-				{
-					karaoke.commit( ) ;
-					karaoke.topLayers( ) ;
-				}
-				karaoke.end( ) ;
-			}
-			else if ( typeof krkx == 'undefined' )
-			{
-				alert( 'Possible Reasons of Failure:\n\n1.  "KRK" Composition is not found.\n2.  You have not added any compositions in KRK Comp,\n3.  Make sure at least one comp layer in "KRK" comp is NOT SHY.\n4.  You have not provided the karaoke .ass paste in the topmost text layer.' ) ;
-			}
-			try{ karaoke.destruct( ) ;
-			delete karaoke ;
-			delete krk ; } catch(e){ } 
-		} 
-		catch( e )
-		{
-			KRKCommon.error_alert( e ) ;
-		}
-	}
-} } ) ();
-
-
+KRKGUI.instance = new KRKGUI( ) ;
+KRKGUI.instance.run( ) ;
 
 /************************************************************************
 VERSION TRACKING
