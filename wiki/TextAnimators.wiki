@@ -8,8 +8,12 @@ In this guideline, you will learn a shear number of syllable and line effects yo
 The addition of zero-spacing into text animators enables you to perform effect on the entire syllable rather than individual characters.  To enable per-syllable effect, you must do the following:
   # Text -> More Options -> Anchor Point Grouping
   # Set that to "Word"
-  # Alternative, you can add in space="true" in {{{<line />}}}.
+  # Alternative, you can add in space="true" in {{{<layer>}}}.
   # It will now be treated as per-syllable effect.  Note you need to use Word as a mode effect.
+{{{
+<layer name="karaoke" space="yes">
+</layer>
+}}}
 
 Basically, with this feature enabled, the script will add spaces after every syllable.  You can then adjust the spacing using your defined slider control.  The point of this is to enable Per-syllable effect, i.e. the entire syllable is affected rather than just the character or word itself.
 
