@@ -2285,7 +2285,9 @@ function KRKAnimator( animator , options )
 		var $name ;
 		sel = this.sel.parentProperty(this.selectorIndex[this.currentSelector]) ;
 		$name = sel.name ;
+		sel.enabled = false ;
 		sel = sel.duplicate( );
+		sel.enabled = true ;
 		if ( name != undefined )
 		{
 			sel.name = $name + " " + name ;
@@ -2308,7 +2310,7 @@ function KRKAnimator( animator , options )
 		this.layer = krk.layer ;
 	}
 	
-	this.getSelector = function( i )
+	this.getSelector = function( i , noenabled )
 	{
 		var sel =this.layer.layer('Text')('Animators')(this.name)('selector');
 		if ( typeof i == 'undefined' )
@@ -2328,7 +2330,8 @@ function KRKAnimator( animator , options )
 		this.end = this.array_end[i] ;
 		this.offset = this.array_offset[i] ;
 		this.old = this.array_old[i] ;
-		return this.sel = sel( this.selectorIndex[i] ) ;
+		this.sel = sel( this.selectorIndex[i] ) ;
+		return this.sel ;
 	}
 	
 	this.storeSelectors = function( )
@@ -2343,10 +2346,9 @@ function KRKAnimator( animator , options )
 		for ( i = 1 , j = 0 ; i <= selector.numProperties ; i ++)
 		{
 			sel = selector(i) ;
-			if ( sel.name.match( /KRK/ ) ) { continue ; }
-			sel.enabled = false ;
+			if ( sel.name.match( /KRK/ ) || ! sel.enabled ) { continue ; }
 			this.selectorIndex[j] = i ;
-		// parse the name.
+		// parse the name
 			this.selectorFixed[j] = this.getFixed( String(sel.name) ) ;
 			j ++ ;
 		}
@@ -2462,7 +2464,7 @@ function KRKAnimator( animator , options )
 		{
 			syllables = [ syllables ] ;
 		}
-		this.dup_sel = this.sel.parentProperty(1);
+		this.dup_sel = this.sel.parentProperty(this.sel.propertyIndex);
 		this.dup_sel.enabled = false ;
 		this.sel.parentProperty.parentProperty.enabled = true ;			
 		if ( !( this.start.keys ? this.start.keys.length : null ) && !( this.end.keys ? this.end.keys.length : null ) &&  !( this.offset.keys ? this.offset.keys.length : null ) )
@@ -2534,7 +2536,6 @@ function KRKAnimator( animator , options )
 						if ( syllables instanceof Object ? syllables[i] : true )
 						{
 							this.dup( "KRK " + i ) ;
-							this.sel.enabled = true ;
 							this.start.property = this.sel('start') ;
 							this.end.property = this.sel('end') ;
 							this.offset.property = this.sel('offset') ;
@@ -2567,7 +2568,6 @@ function KRKAnimator( animator , options )
 					o.end = !ii ? ( this.selectorType == 3 ? lensyl : ( this.selectorType == 2 ? text.length : lensyl ) ) / len : 1 ; 
 					o.mul = 1 ;
 					this.dup( "KRK " + String(ii+1) ) ;
-					this.sel.enabled = true ;
 					this.start.property = this.sel('start') ;
 					this.end.property = this.sel('end') ;
 					this.offset.property = this.sel('offset') ;
@@ -2625,7 +2625,6 @@ function KRKAnimator( animator , options )
 					if ( syllables instanceof Object ? syllables[i] : true )
 					{
 						this.dup( "KRK " + i ) ;
-						this.sel.enabled = true ;
 						this.start.property = this.sel('start') ;
 						this.end.property = this.sel('end') ;
 						this.offset.property = this.sel('offset') ;
@@ -2649,7 +2648,6 @@ function KRKAnimator( animator , options )
 			else
 			{
 				this.dup( "KRK 1" ) ;
-				this.sel.enabled = true ;
 				this.start.property = this.sel('start') ;
 				this.end.property = this.sel('end') ;
 				this.offset.property = this.sel('offset') ;
