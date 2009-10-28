@@ -753,7 +753,7 @@ function KRKComp( comp )
 			if ( typeof threed == 'undefined' ) { threed = this.xml_bool( layer.@threeD ) ; } 
 			krklayer = this.add( this.xml_value( layer.@name  ) , 
 			{
-				space: this.xml_value( layer.@space ) , 
+				space: this.xml_bool( layer.@space ) , 
 				alias: this.xml_value( layer.@alias ) , 
 				no: this.xml_value( layer.@no ) , 
 				disabled: this.xml_bool(layer.@disabled) , 
