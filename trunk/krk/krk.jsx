@@ -1,6 +1,6 @@
 ﻿/************************************************************************
 @NAME After-Effects Karaoke Framework
-@VERSION 0.65-svn
+@VERSION 0.65
 @AUTHOR pichu
 @License LGPL
 
@@ -2489,7 +2489,7 @@ function KRKAnimator( animator , options )
 			{
 				case 2:
 					len = kll.replace( /\s/g , '' ).length ;
-					lensyl = kline.text.replace( /s/g , '' ).length ;
+					lensyl = kline.text.replace( /\s/g , '' ).length ;
 					break ;
 				case 3:
 					for ( len = ii = 0 ; ii < 2 ; ii ++)
@@ -2513,21 +2513,17 @@ function KRKAnimator( animator , options )
 					var text = '' ;
 					for ( i = 0 ; i <  ksyl.length ; i ++ )
 					{
+						ks = ksyl[i] ;
 						text = ( this.selectorType == 3 || this.selectorType == 2 ) 
-							? ksyl[i].text.replace( /\s/g , '' ) : ksyl[i].text ;
-/*						if ( ! text )
+							? ks.text.replace( /\s/g , '' ) : ks.text ;
+						if ( ! text )
 						{
 							if ( this.selectorType != 3 && this.selectorType != 2 )
 							{
-								start += ksyl[i].text.length + addspace ;
+								start += text.length + addspace ;
 							}
-/*							if ( this.selectorType != 1 )
-							{
-								continue ;
-							}
-						}*/
-						ks = ksyl[i] ;
-						if ( ks.text.length == 0 ) { continue ; }						
+							continue ;
+						}
 						o.startTime = ks.time ;
 						o.endTime = ks.time + ks.dur ;
 						o.start = start / len ;
@@ -2543,17 +2539,7 @@ function KRKAnimator( animator , options )
 							this.end.setKeys( o , funs ) ;
 							this.offset.setKeys( o , funs ) ;
 						}
-						if (!text)
-						{
-							if ( this.selectorType != 3 && this.selectorType != 2 )
-							{
-								start += ksyl[i].text.length + addspace ;
-							}
-						}
-						else
-						{
-							start += this.selectorType == 3 ? 1 : ( this.selectorType == 2 ? text.length : ks.text.length + addspace ) ;
-						}
+						start += this.selectorType == 3 ? 1 : ( this.selectorType == 2 ? text.length : ks.text.length + addspace ) ;
 					}
 				}
 			}
@@ -2602,21 +2588,17 @@ function KRKAnimator( animator , options )
 				o.end = start = 0 ;var text ;
 				for ( i = 0 ; i <  ksyl.length ; i ++ )
 				{
+					ks = ksyl[i] ;
 					text = ( this.selectorType == 3 || this.selectorType == 2 ) 
-						? ksyl[i].text.replace( /\s/g , '' ) : ksyl[i].text ;
-/*					if ( ! text )
+						? ks.text.replace( /\s/g , '' ) : ks.text ;
+					if ( ! text )
 					{
 						if ( this.selectorType != 3 && this.selectorType != 2 )
 						{
-							start += ksyl[i].text.length + addspace ;
+							start += text.length + addspace ;
 						}
-						if ( this.selectorType != 1 )
-						{
-							continue ;
-						}
-					}*/
-					ks = ksyl[i] ;
-					if ( ks.text.length == 0 ) { continue ; }						
+						continue ;
+					}
 					o.startTime = ks.time ;
 					o.endTime = ks.time + ks.dur ;
 					o.start = start / len ;
@@ -2632,17 +2614,7 @@ function KRKAnimator( animator , options )
 						this.end.setKeys( o , funs ) ;
 						this.offset.setKeys( o , funs ) ;
 					}
-						if (!text)
-						{
-							if ( this.selectorType != 3 && this.selectorType != 2 )
-							{
-								start += ksyl[i].text.length + addspace ;
-							}
-						}
-						else
-						{
-							start += this.selectorType == 3 ? 1 : ( this.selectorType == 2 ? text.length : ks.text.length + addspace ) ;
-						}
+					start += this.selectorType == 3 ? 1 : ( this.selectorType == 2 ? text.length : ks.text.length + addspace ) ;
 				}
 			}
 			else
@@ -3050,7 +3022,7 @@ function KRKProperty( property , options )
 			}
 			else
 			{
-				this.property[method]( index != null ? index : keyIndex , a ) ;
+				this.property[method]( index != null ? index : keyIndex , a ) ; 
 //				try{ this.property[method]( index != null ? index : keyIndex , a ) ; } catch( err ) { throw( "Error: " + method ) }
 			}
 		}
