@@ -657,7 +657,7 @@ function KRKComp( comp )
 				xml__ 
 			}
 			
-			this.throw( {
+			this.throwss( {
 				message: 'Error parsing XML/Configuration.' ,
 				xml: xml__
 			} , err ) ;
@@ -728,7 +728,7 @@ function KRKComp( comp )
 			}
 		} catch( err )
 		{
-			this.throw( {
+			this.throws( {
 				xml: this.xml.copy[i]
 			} , err) ;
 		}
@@ -765,7 +765,7 @@ function KRKComp( comp )
 		} catch( err ) { 
 			var description = 
 				err.number == 21 ? "Layer's name is invalid." : undefined ;
-			this.throw( {
+			this.throws( {
 				message: 'Error adding a layer into comp.' ,
 				comp: this.name ,
 				layer: layer.@name ,
@@ -780,7 +780,7 @@ function KRKComp( comp )
 				try { krklayer[f]( children[j] ) ; }
 				catch( err )
 				{
-					this.throw(
+					this.throws(
 						{
 							message: err.message === '' || ! err.message || err.message == err.description ? "Error performing XML" : err.message ,
 							comp: this.name ,
@@ -1143,7 +1143,7 @@ function KRKLayer( layer , options )
 		}
 		catch(err)
 		{
-			this.throw( {message: err.number == 21 ? "Bad Animator's name.  Make sure you have your animator's name correct!" : err.message } , err ) ;
+			this.throws( {message: err.number == 21 ? "Bad Animator's name.  Make sure you have your animator's name correct!" : err.message } , err ) ;
 		}
 	}
 
@@ -1447,7 +1447,7 @@ function KRKLayer( layer , options )
 				try { this.p( "effect('Position')('Point')" , {pos: this.old.name, syl:true} ) ; } catch( err ) { }
 			}
 		}
-		catch( err ){ this.throw( {
+		catch( err ){ this.throws( {
 					message: "Error calculating zero space" ,
 					layer: this.name ,
 					comp: this.comp.name
@@ -1546,12 +1546,12 @@ function KRKLayer( layer , options )
 					{
 						try {
 						property = this.getProperty( newLayer , this.setprop[l].name ) ;
-						property[ this.setprop[l].property ] = this.setprop[l].value ; } catch(err) { this.throw( { layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"  ("+this.setprop[l].property+")\nWith value: " + this.setprop[l].value  } , err ) ; }
+						property[ this.setprop[l].property ] = this.setprop[l].value ; } catch(err) { this.throws( { layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"  ("+this.setprop[l].property+")\nWith value: " + this.setprop[l].value  } , err ) ; }
 					}
 					else
 					{
 						try{
-						newLayer[this.setprop[l].name] = this.setprop[l].property ; } catch(err){ this.throw( { layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"  ("+this.setprop[l].property + ')'  } , err ) ; }
+						newLayer[this.setprop[l].name] = this.setprop[l].property ; } catch(err){ this.throws( { layer: this.layer.name , description: "Error setting property: "+this.setprop[l].name+"  ("+this.setprop[l].property + ')'  } , err ) ; }
 					}
 				}
 			
@@ -1873,7 +1873,7 @@ function KRKLayer( layer , options )
 				}
 				catch( err )
 				{
-					this.throw( {
+					this.throws( {
 							message: "Error adding lines" ,
 							layer: this.name ,
 							comp: this.comp.name ,
