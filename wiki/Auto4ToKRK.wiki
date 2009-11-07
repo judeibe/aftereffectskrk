@@ -28,7 +28,7 @@ JavaScript for expressions. XML for configurations. .ass for timed.  .aep as the
   * Create template text layers and style them and other Template layers
   * Add effects and animators into the text layer
   * Add expressions associated to the animators and properties for what you want (optional)
-  * Configure/tell KRK what to use.
+  * Configure/tell KRK what to use.  KRK isn't very smart. :)
   * Run KRK to generate the proper layers.
   * Render... All expressions are executed at rendering-time.
 
