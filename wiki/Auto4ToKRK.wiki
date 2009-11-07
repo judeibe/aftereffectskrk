@@ -20,12 +20,12 @@ JavaScript for expressions. XML for configurations. .ass for timed.  .aep as the
   * define template classes
   * Write your codes into the text field (10th field)
   * run
-  * processs/encode
+  * process/encode
 
 == KRK ==
   * Time .ass
   * Copy and Paste them into After-Effects's Text Layer
-  * Create template text layers and style them
+  * Create template text layers and style them and other Template layers
   * Add effects and animators into the text layer
   * Add expressions associated to the animators and properties for what you want (optional)
   * Configure/tell KRK what to use.
