@@ -1,4 +1,4 @@
-/************************************************************************
+﻿/************************************************************************
 @NAME After-Effects Karaoke Framework
 @VERSION 0.65a
 @AUTHOR pichu
@@ -1193,7 +1193,7 @@ function KRKLayer( layer , options )
 	 */
 	this.s = function( propertyName , property , value )
 	{
-		this.setprop.push( { name : propertyName , property : property , value : value } ) ;
+		this.setprop.push( { name : propertyName , property : property , value : typeof number != 'undefined' ? Number(number) : value } ) ;
 		return this ;
 	}
 
@@ -1206,7 +1206,7 @@ function KRKLayer( layer , options )
 		}
 		else
 		{
-			this.s( this.xml_value( x.@name ) , this.xml_value( x.@property ) , this.xml_value( x.@value ) ) ;
+			this.s( this.xml_value( x.@name ) , this.xml_value( x.@property ) , this.xml_value( x.@value ) , this.xml_value( x.@number ) ) ;
 		}
 		return this ;
 	}
@@ -1437,6 +1437,7 @@ function KRKLayer( layer , options )
 		var threed , index ;
 		var $project = this.getParent("project")  ;
 		var location , size ;
+		var value ;
 		// Check for default properties:
 		try
 		{
