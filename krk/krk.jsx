@@ -1,4 +1,4 @@
-﻿/************************************************************************
+/************************************************************************
 @NAME After-Effects Karaoke Framework
 @VERSION 0.65a
 @AUTHOR pichu
@@ -1193,7 +1193,7 @@ function KRKLayer( layer , options )
 	 */
 	this.s = function( propertyName , property , value )
 	{
-		this.setprop.push( { name : propertyName , property : property , value : typeof number != 'undefined' ? Number(number) : value } ) ;
+		this.setprop.push( { name : propertyName , property : property , value : value } ) ;
 		return this ;
 	}
 
@@ -1206,7 +1206,7 @@ function KRKLayer( layer , options )
 		}
 		else
 		{
-			this.s( this.xml_value( x.@name ) , this.xml_value( x.@property ) , this.xml_value( x.@value ) , this.xml_value( x.@number ) ) ;
+			this.s( this.xml_value( x.@name ) , this.xml_value( x.@property ) , this.xml_value( x.@value ) ) ;
 		}
 		return this ;
 	}
@@ -1437,7 +1437,6 @@ function KRKLayer( layer , options )
 		var threed , index ;
 		var $project = this.getParent("project")  ;
 		var location , size ;
-		var value ;
 		// Check for default properties:
 		try
 		{
@@ -2924,10 +2923,12 @@ function KRKProperty( property , options )
 		var value ;
 		var t ;
 		var valueFunction, timeFunction ;
+		var expressionEnabled = this.property.expressionEnabled ;
 		if ( ! this.keys ? null : ! this.keys.length )
 		{
 			return false ;
 		}
+		this.property.expressionEnabled = false ;		
 		if ( functions != undefined )
 		{
 			if ( functions instanceof Object )
@@ -2975,6 +2976,7 @@ function KRKProperty( property , options )
 			t = timeFunction( options.endTime , options.end , options ) ;
 				this.property.setValueAtTime( t , value );
 		}
+		this.property.expressionEnabled = expressionEnabled ;
 		return this ;
 	}
 
@@ -3661,7 +3663,7 @@ function KRKCommon( )
 		{
 			var start = o.start == undefined ? 0 : ( o.start instanceof Array ? o.start[0] : o.start ) ;
 			var end = o.end == undefined ? 1 : ( o.end instanceof Array ? o.end[0] : o.end ) ;
-			return o.fixedValue ? mul * value : ( value * ( end - start ) * mul + start ) ;
+			return typeof o.fixedValue == 'undefined' || o.fixedValue ? ( mul == 1 ? value :  mul * value ) : ( value * ( end - start ) * mul + start ) ;
 		}
 	}
 
